@@ -7,7 +7,7 @@ image: karlhavoc/weigh_in
 # Deploy to these servers.
 servers:
   web:
-    mdksoftware.io
+  - mdksoftware.io
   # job:
   #   hosts:
   #     - 192.168.0.1
