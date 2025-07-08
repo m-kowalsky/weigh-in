@@ -33,6 +33,7 @@ func main() {
 	tmpl = t
 
 	r.Get("/", handlerIndex)
+	r.Get("/up/", handlerKamalHealthCheck)
 
 	http.ListenAndServe("0.0.0.0:8080", r)
 }
@@ -45,4 +46,9 @@ func handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	tmpl.ExecuteTemplate(w, "index", data)
 
+}
+
+func handlerKamalHealthCheck(w http.ResponseWriter, r *http.Request) {
+
+	w.WriteHeader(http.StatusOK)
 }
