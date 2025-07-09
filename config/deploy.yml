@@ -19,11 +19,15 @@ servers:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   ssl: true
-  host: 
-    mdksoftware.io
-    www.mdksoftware.io
+  hosts: 
+    - mdksoftware.io
+    - www.mdksoftware.io
   # Proxy connects to your container on port 80 by default.
-  # app_port: 3000
+  app_port: 8080
+  healthcheck:
+    path: "/up/"
+    interval: 2
+    timeout: 2
 
 # Credentials for your image host.
 registry:

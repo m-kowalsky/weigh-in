@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"embed"
 	"html/template"
 	"log"
@@ -25,6 +26,12 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
+	db, err := sql.Open("sqlite3", "weigh_in.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
 	t, err := template.ParseFS(tmpls, "templates/*.html")
 	if err != nil {
 		log.Printf("error with parsing html templates: %v", err)
@@ -35,7 +42,7 @@ func main() {
 	r.Get("/", handlerIndex)
 	r.Get("/up/", handlerKamalHealthCheck)
 
-	http.ListenAndServe("0.0.0.0:8080", r)
+	http.ListenAndServe(":8080", r)
 }
 
 func handlerIndex(w http.ResponseWriter, r *http.Request) {
