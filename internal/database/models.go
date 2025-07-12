@@ -15,21 +15,23 @@ type Diet struct {
 }
 
 type User struct {
-	ID        int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Email     sql.NullString
+	ID          int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Email       string
+	AccessToken interface{}
+	FullName    interface{}
 }
 
 type WeighIn struct {
 	ID          int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Weight      sql.NullInt64
-	WeightUnit  sql.NullString
+	Weight      int64
+	WeightUnit  string
 	LogDate     time.Time
 	Note        sql.NullString
 	Cheated     bool
 	Alcohol     bool
-	WeighInDiet sql.NullString
+	WeighInDiet string
 }

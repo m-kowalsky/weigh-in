@@ -7,30 +7,69 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
+const checkIfUserExistsByEmail = `-- name: CheckIfUserExistsByEmail :one
+Select count(*) from users where email = ?
+`
+
+func (q *Queries) CheckIfUserExistsByEmail(ctx context.Context, email string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, checkIfUserExistsByEmail, email)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUser = `-- name: CreateUser :one
-Insert into users (created_at, updated_at, email)
-Values ( ?, ?, ? )
-Returning id, created_at, updated_at, email
+Insert into users (created_at, updated_at, email, access_token, full_name)
+Values ( ?, ?, ?, ?, ?)
+Returning id, created_at, updated_at, email, access_token, full_name
 `
 
 type CreateUserParams struct {
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Email     sql.NullString
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Email       string
+	AccessToken interface{}
+	FullName    interface{}
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.CreatedAt, arg.UpdatedAt, arg.Email)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.Email,
+		arg.AccessToken,
+		arg.FullName,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Email,
+		&i.AccessToken,
+		&i.FullName,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+Select id, created_at, updated_at, email, access_token, full_name From users
+Where email = ?
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.AccessToken,
+		&i.FullName,
 	)
 	return i, err
 }

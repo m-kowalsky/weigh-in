@@ -1,10 +1,7 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"embed"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -14,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/m-kowalsky/weigh-in/internal/auth"
 	"github.com/m-kowalsky/weigh-in/internal/database"
-	"github.com/markbates/goth/gothic"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -31,14 +28,10 @@ type Data struct {
 const tmpl_path = "templates/*.html"
 
 type apiConfig struct {
-	db           *database.Queries
-	access_token string
-}
-
-type User struct {
-	Id        string
-	Email     string
-	Firstname string
+	db            *database.Queries
+	access_token  string
+	providerIndex *ProviderIndex
+	current_user  database.User
 }
 
 func main() {
@@ -47,7 +40,7 @@ func main() {
 	auth.NewAuth()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-
+	//Can delete and refactor db setup
 	err := openDb()
 	if err != nil {
 		log.Fatal(err)
@@ -66,24 +59,26 @@ func main() {
 	db_queries := database.New(Db)
 
 	apiCfg := apiConfig{
-		db:           db_queries,
-		access_token: "",
+		db:            db_queries,
+		providerIndex: providerIndex,
+		access_token:  "",
 	}
 
 	// Routes
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-
-		err = tmpl.ExecuteTemplate(w, "index.html", providerIndex)
-		if err != nil {
-			log.Fatal(err)
+		if IsAuth(r) {
+			http.Redirect(w, r, "/profile", http.StatusTemporaryRedirect)
+			return
 		}
+		tmpl.ExecuteTemplate(w, "index.html", providerIndex)
 
 	})
 	r.Get("/up/", apiCfg.handlerKamalHealthcheck)
-	r.Get("/logout/{provider}", logoutProviderFunction)
-	r.Get("/auth/{provider}", handlerGetAuthProvider)
-	r.Get("/auth/{provider}/callback", handlerGetAuthCallback)
+	r.Get("/logout/{provider}", apiCfg.handlerLogout)
+	r.Get("/auth/{provider}", apiCfg.handlerGetAuth)
+	r.Get("/auth/{provider}/callback", apiCfg.handlerGetAuthCallback)
+	r.Get("/profile", apiCfg.handlerProfile)
 
 	// Run server
 
@@ -105,50 +100,6 @@ func parseHTMLTemplates(path string) error {
 
 	return nil
 
-}
-
-func (apiCfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
-	provider := chi.URLParam(r, "provider")
-	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
-
-	user, err := gothic.CompleteUserAuth(w, r)
-	if err != nil {
-		fmt.Println("Auth error:", err)
-		fmt.Fprintln(w, err)
-		return
-	}
-
-	err = tmpl.ExecuteTemplate(w, "user.html", user)
-
-	fmt.Println(user.UserID)
-	fmt.Println(user.Email)
-	fmt.Println(user.FirstName)
-	fmt.Printf("type of access token: %T", user.AccessToken)
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func handlerGetAuthProvider(w http.ResponseWriter, r *http.Request) {
-
-	// try to get the user without re-authenticating
-	if gothUser, err := gothic.CompleteUserAuth(w, r); err == nil {
-		err := tmpl.ExecuteTemplate(w, "user.html", gothUser)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		gothic.BeginAuthHandler(w, r)
-	}
-}
-
-func logoutProviderFunction(w http.ResponseWriter, r *http.Request) {
-	gothic.Logout(w, r)
-	w.Header().Set("Location", "/")
-	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 type ProviderIndex struct {

@@ -5,4 +5,4 @@ diet_type text
 );
 
 -- +goose Down
-Drop table diets
+Drop table diets;
