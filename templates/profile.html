@@ -11,7 +11,9 @@
 	{{ range .Providers }}
 	<p><a href="/logout/{{ . }}">logout {{ . }}</a></p>
 	{{ end }}
-	<p>Email: {{ .Email }} </p>
+	<p>Email: {{ .User.Email }} </p>
+	<p> Name: {{ .User.FullName }}</p>
+
 </body>
 
 </html>

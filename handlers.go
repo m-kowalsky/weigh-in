@@ -104,12 +104,13 @@ func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) 
 
 	data := struct {
 		Providers []string
-		Email     string
+		User      database.User
 	}{
 		Providers: apiCfg.providerIndex.Providers,
-		Email:     user_email,
+		User:      apiCfg.current_user,
 	}
 
+	fmt.Println(data.User.FullName)
 	tmpl.ExecuteTemplate(w, "profile.html", data)
 
 }
