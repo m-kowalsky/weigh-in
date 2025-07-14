@@ -27,6 +27,8 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	// fmt.Printf("goth user: %#v", goth_user)
+
 	// Check if user exists in db already by getting a count of a user by email
 	count, err := apiCfg.db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
 	if err != nil {
@@ -40,8 +42,7 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 			return
 		}
 
-		apiCfg.current_user = current_user
-		fmt.Printf("current user: %v", apiCfg.current_user)
+		fmt.Printf("current user: %v", current_user)
 	} else {
 		new_user, err := apiCfg.db.CreateUser(r.Context(), database.CreateUserParams{
 			CreatedAt:   time.Now(),
@@ -54,19 +55,18 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 			http.Error(w, "problem creating new user", http.StatusBadRequest)
 		}
 
-		apiCfg.current_user = new_user
-		fmt.Printf("current user: %v", apiCfg.current_user)
+		fmt.Printf("current user: %v", new_user)
 	}
 
-	sess, err := gothic.Store.Get(r, "gothic-session")
+	sess, err := gothic.Store.Get(r, "user-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	sess.Values["is_auth"] = true
-	sess.Values["user_email"] = apiCfg.current_user.Email
-	sess.Values["user_id"] = apiCfg.current_user.ID
+	sess.Values["user_email"] = goth_user.Email
+	sess.Values["user_id"] = goth_user.UserID
 	sess.Save(r, w)
 
+	fmt.Printf("\ncallback session: %#v\n", sess)
 	http.Redirect(w, r, "/profile", http.StatusTemporaryRedirect)
 }
 
@@ -81,48 +81,30 @@ func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) 
 }
 
 func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
-	sess, _ := gothic.Store.Get(r, "gothic-session")
-	sess.Values["is_auth"] = false
-	sess.Options.MaxAge = -1
-	sess.Save(r, w)
-
 	gothic.Logout(w, r)
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
 func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) {
 
-	if !IsAuth(r) {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-
+	sess, _ := gothic.Store.Get(r, "user-session")
+	email := sess.Values["user_email"].(string)
+	current_user, err := apiCfg.db.GetUserByEmail(r.Context(), email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
+	fmt.Printf("\ncurrent user: %s\n", current_user.FullName)
 
-	user_email := apiCfg.current_user.Email
-
-	fmt.Printf("User email: %s", user_email)
-
-	data := struct {
-		Providers []string
+	type ProfileData struct {
 		User      database.User
-	}{
+		Providers []string
+	}
+
+	data := ProfileData{
+		User:      current_user,
 		Providers: apiCfg.providerIndex.Providers,
-		User:      apiCfg.current_user,
 	}
 
-	fmt.Println(data.User.FullName)
 	tmpl.ExecuteTemplate(w, "profile.html", data)
-
-}
-
-func IsAuth(r *http.Request) bool {
-	sess, _ := gothic.Store.Get(r, "gothic-session")
-
-	// Check "authenticated" flag
-	if auth, ok := sess.Values["is_auth"].(bool); !ok || !auth {
-		// Not logged in → redirect to home or login
-		return false
-	}
-	return true
 
 }

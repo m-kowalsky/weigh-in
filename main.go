@@ -31,7 +31,6 @@ type apiConfig struct {
 	db            *database.Queries
 	access_token  string
 	providerIndex *ProviderIndex
-	current_user  database.User
 }
 
 func main() {
@@ -67,10 +66,6 @@ func main() {
 	// Routes
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		if IsAuth(r) {
-			http.Redirect(w, r, "/profile", http.StatusTemporaryRedirect)
-			return
-		}
 		tmpl.ExecuteTemplate(w, "index.html", providerIndex)
 
 	})
