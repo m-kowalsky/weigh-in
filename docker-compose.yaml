@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  app:
+    image: weigh_in:latest
+    container_name: weigh_in_data
+    volumes:
+      - sqlite_data:/app/data  # Mount volume inside container
+    ports:
+      - "8080:8080"  # Example port mapping, adjust as needed
+
+volumes:
+  sqlite_data:

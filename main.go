@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/m-kowalsky/weigh-in/internal/auth"
 	"github.com/m-kowalsky/weigh-in/internal/database"
+	"github.com/pressly/goose/v3"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -19,6 +20,9 @@ var tmpl *template.Template
 
 //go:embed templates/*
 var tmpls embed.FS
+
+//go:embed sql/schema/*
+var migrations embed.FS
 
 type Data struct {
 	Title string
@@ -50,9 +54,20 @@ func main() {
 	}
 	defer closeDb()
 
-	err = setupDbSchema()
-	if err != nil {
-		log.Fatal(err)
+	// err = setupDbSchema()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// Goose migrations setup
+	goose.SetBaseFS(migrations)
+
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		log.Fatal("Error setting goose dialect")
+	}
+
+	if err := goose.Up(Db, "sql/schema"); err != nil {
+		log.Fatal("Error running database migrations")
 	}
 
 	// Parse templates in /templates/*.html
