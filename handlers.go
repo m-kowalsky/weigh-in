@@ -17,6 +17,8 @@ func (apiCfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.
 }
 
 func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
+
+	// Get provider param from url for gothic auth
 	provider := chi.URLParam(r, "provider")
 	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
 
@@ -56,12 +58,7 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 		fmt.Printf("current user: %v", new_user)
 	}
 
-	// sess, err := gothic.Store.Get(r, gothic.SessionName)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// }
-	// sess.Values["email"] = goth_user.Email
-	// sess.Save(r, w)
+	// Create new session with user id and email
 
 	sess, err := gothic.Store.Get(r, "user_session")
 	if err != nil {
@@ -71,7 +68,6 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 	sess.Values["user_id"] = goth_user.UserID
 	sess.Save(r, w)
 
-	fmt.Printf("\ncallback session: %#v\n", sess)
 	http.Redirect(w, r, "/profile", http.StatusTemporaryRedirect)
 }
 
@@ -86,18 +82,18 @@ func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) 
 }
 
 func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
+
+	// Logout a user by setting the current user_session max age to -1 which will cause the client to delete the cookie associated with the session
 	session, err := gothic.Store.Get(r, "user_session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 	session.Options.MaxAge = -1
-	session.Values = make(map[interface{}]interface{})
+	session.Values = make(map[any]any)
 	err = session.Save(r, w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	fmt.Println(session.Options.MaxAge)
-	fmt.Printf("logout session: %#v", session)
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
@@ -116,16 +112,6 @@ func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 	fmt.Printf("\ncurrent user: %s\n", current_user.FullName)
-
-	// sess, err := gothic.Store.Get(r, gothic.SessionName)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// }
-	// email := sess.Values["email"].(string)
-	// current_user, err := apiCfg.db.GetUserByEmail(r.Context(), email)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusBadRequest)
-	// }
 
 	type ProfileData struct {
 		User      database.User

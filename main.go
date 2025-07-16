@@ -35,11 +35,15 @@ type apiConfig struct {
 
 func main() {
 
+	// Goth and sessions setup
 	providerIndex := gothProviderSetup()
 	auth.NewAuth()
+
+	// Setup chi router and logger middleware
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	//Can delete and refactor db setup
+
+	// Db open and setup. Create tables if they don't exist
 	err := openDb()
 	if err != nil {
 		log.Fatal(err)
@@ -51,16 +55,18 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Parse templates in /templates/*.html
 	err = parseHTMLTemplates(tmpl_path)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Connect db created above to queries for sqlc
 	db_queries := database.New(Db)
 
 	apiCfg := apiConfig{
 		db:            db_queries,
 		providerIndex: providerIndex,
-		access_token:  "",
 	}
 
 	// Routes
