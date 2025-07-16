@@ -15,8 +15,9 @@ RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib
 WORKDIR /app
 COPY --from=builder /app/app .
 COPY templates ./templates
-COPY .env .env
 COPY ./sql/schema ./sql/schema/
+
+RUN mkdir -p /app/data && chown -R nobody:nogroup /app/data
 
 # Expose correct port
 EXPOSE 8080

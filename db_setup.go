@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"log"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -9,8 +11,9 @@ var Db *sql.DB
 
 func openDb() error {
 
-	db, err := sql.Open("sqlite3", "./data/weigh_in_db.db")
+	db, err := sql.Open("sqlite3", "/app/data/app.db")
 	if err != nil {
+		log.Fatal("Failed to open database")
 		return err
 	}
 	Db = db
