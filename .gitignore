@@ -1,6 +1,6 @@
 /tmp
 .env
 /env
-.kamal/secrets.yml
+.kamal/secrets
 
 
