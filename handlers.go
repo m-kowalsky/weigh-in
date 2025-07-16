@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -21,7 +22,8 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 	// Get provider param from url for gothic auth
 	provider := chi.URLParam(r, "provider")
 	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
-
+	client_id := os.Getenv("GOOGLE_CLIENT_ID")
+	fmt.Printf("\n client id: %v", client_id)
 	goth_user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
 		fmt.Println("Auth error:", err)
