@@ -1,3 +1,4 @@
+<% require "dotenv"; Dotenv.load(".env") %>
 # Name of your application. Used to uniquely configure containers.
 service: weigh_in
 
@@ -37,7 +38,7 @@ registry:
 
   # Always use an access token rather than real password (pulled from .kamal/secrets).
   password:
-    - KAMAL_REGISTRY_PASSWORD
+    - <%= ENV["KAMAL_REGISTRY_PASSWORD"] %>
 
 # Configure builder setup.
 builder:
