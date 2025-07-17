@@ -35,7 +35,7 @@ func NewAuth() {
 	store.MaxAge(MaxAge)
 
 	store.Options.Path = "/"
-	store.Options.HttpOnly = true
+	store.Options.HttpOnly = false
 	store.Options.Secure = IsProd
 	store.Options.SameSite = http.SameSiteLaxMode
 
