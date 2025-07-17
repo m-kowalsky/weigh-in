@@ -45,7 +45,7 @@ func NewAuth() {
 
 	var callback_url string
 	if IsProd {
-		callback_url = "https://www.mdksoftware.io/auth/google/callback"
+		callback_url = "https://mdksoftware.io/auth/google/callback"
 	} else {
 		callback_url = "http://localhost:8080/auth/google/callback"
 	}
@@ -53,4 +53,5 @@ func NewAuth() {
 	goth.UseProviders(
 		google.New(googleClientId, googleClientSecret, callback_url),
 	)
+	fmt.Println(callback_url)
 }
