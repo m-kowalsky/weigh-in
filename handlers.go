@@ -18,6 +18,9 @@ func (apiCfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.
 
 func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
 
+	for _, cookie := range r.Cookies() {
+		fmt.Printf("\nGetAuthCallback-start cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
+	}
 	// Get provider param from url for gothic auth
 	provider := chi.URLParam(r, "provider")
 	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
@@ -29,6 +32,9 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	for _, cookie := range r.Cookies() {
+		fmt.Printf("\nGetAuthCallback-end cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
+	}
 	// Check if user exists in db already by getting a count of a user by email
 	count, err := apiCfg.db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
 	if err != nil {
@@ -73,6 +79,9 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 
 func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
 
+	for _, cookie := range r.Cookies() {
+		fmt.Printf("\nGetAuth cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
+	}
 	// try to get the user without re-authenticating
 	if gothUser, err := gothic.CompleteUserAuth(w, r); err == nil {
 		tmpl.ExecuteTemplate(w, "profile.html", gothUser)
