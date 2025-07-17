@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -30,18 +31,26 @@ func NewAuth() {
 
 	googleClientId := os.Getenv("GOOGLE_CLIENT_ID")
 	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	fmt.Printf("\n client id, client secret: %v, %v\n", googleClientId, googleClientSecret)
 
 	store := sessions.NewCookieStore([]byte(session_key))
 	store.MaxAge(MaxAge)
 
 	store.Options.Path = "/"
-	store.Options.HttpOnly = false
+	store.Options.HttpOnly = true
 	store.Options.Secure = IsProd
 	store.Options.SameSite = http.SameSiteLaxMode
 
 	gothic.Store = store
 
+	var callback_url string
+	if IsProd {
+		callback_url = "https://www.mdksoftware.io/auth/google/callback"
+	} else {
+		callback_url = "http://localhost:8080/auth/google/callback"
+	}
+
 	goth.UseProviders(
-		google.New(googleClientId, googleClientSecret, "http://localhost:8080/auth/google/callback"),
+		google.New(googleClientId, googleClientSecret, callback_url),
 	)
 }
