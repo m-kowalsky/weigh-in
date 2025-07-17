@@ -24,7 +24,6 @@ proxy:
     - mdksoftware.io
     - www.mdksoftware.io
   # Proxy connects to your container on port 80 by default.
-  app_port: 8080
   healthcheck:
     path: "/up/"
     interval: 2

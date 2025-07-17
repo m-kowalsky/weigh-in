@@ -98,8 +98,8 @@ func main() {
 
 	// Run server
 
-	err = http.ListenAndServe(":8080", r)
-	log.Println("Serving on port 8080....")
+	err = http.ListenAndServe(":80", r)
+	log.Println("Serving on port 80....")
 	if err != nil {
 		log.Fatal(err)
 	}
