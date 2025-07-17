@@ -51,6 +51,6 @@ func NewAuth() {
 	// }
 
 	goth.UseProviders(
-		google.New(googleClientId, googleClientSecret, "https://www.mdksoftware.io/auth/google/callback"),
+		google.New(googleClientId, googleClientSecret, "https://mdksoftware.io/auth/google/callback"),
 	)
 }
