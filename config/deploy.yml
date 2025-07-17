@@ -21,8 +21,6 @@ servers:
 proxy:
   ssl: true
   host: mdksoftware.io
-  hosts: 
-    - www.mdksoftware.io
   # Proxy connects to your container on port 80 by default.
   app_port: 8080
   healthcheck:
