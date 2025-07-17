@@ -8,7 +8,7 @@ image: karlhavoc/weigh_in
 # Deploy to these servers.
 servers:
   web:
-  - www.mdksoftware.io
+  - mdksoftware.io
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -20,7 +20,7 @@ servers:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   ssl: true
-  host: www.mdksoftware.io
+  host: mdksoftware.io
   # Proxy connects to your container on port 80 by default.
   app_port: 8080
   healthcheck:
