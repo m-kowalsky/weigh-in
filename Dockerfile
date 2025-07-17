@@ -20,6 +20,6 @@ COPY ./sql/schema ./sql/schema/
 RUN mkdir -p /app/data && chown -R nobody:nogroup /app/data
 
 # Expose correct port
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["./app"]
