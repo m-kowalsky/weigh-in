@@ -14,7 +14,7 @@ import (
 
 const (
 	MaxAge = 86400 * 30
-	IsProd = true
+	IsProd = false
 )
 
 func NewAuth() {
@@ -43,15 +43,14 @@ func NewAuth() {
 
 	gothic.Store = store
 
-	var callback_url string
-	if IsProd {
-		callback_url = "https://www.mdksoftware.io/auth/google/callback"
-	} else {
-		callback_url = "http://localhost:8080/auth/google/callback"
-	}
+	// var callback_url string
+	// if IsProd {
+	// 	callback_url = "https://www.mdksoftware.io/auth/google/callback"
+	// } else {
+	// 	callback_url = "http://localhost:8080/auth/google/callback"
+	// }
 
 	goth.UseProviders(
-		google.New(googleClientId, googleClientSecret, callback_url),
+		google.New(googleClientId, googleClientSecret, "https://www.mdksoftware.io/auth/google/callback"),
 	)
-	fmt.Println(callback_url)
 }
