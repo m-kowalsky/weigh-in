@@ -19,9 +19,11 @@ const (
 
 func NewAuth() {
 
-	// err := godotenv.Load()
-	// if err != nil {
-	// 	log.Fatal("Error loading .env file")
+	// if !IsProd {
+	// 	err := godotenv.Load()
+	// 	if err != nil {
+	// 		log.Fatal("Error loading .env file")
+	// 	}
 	// }
 
 	session_key := os.Getenv("SESSION_SECRET_KEY")
@@ -43,14 +45,14 @@ func NewAuth() {
 
 	gothic.Store = store
 
-	// var callback_url string
-	// if IsProd {
-	// 	callback_url = "https://www.mdksoftware.io/auth/google/callback"
-	// } else {
-	// 	callback_url = "http://localhost:8080/auth/google/callback"
-	// }
+	var callback_url string
+	if IsProd {
+		callback_url = "https://mdksoftware.io/auth/google/callback"
+	} else {
+		callback_url = "http://localhost:8080/auth/google/callback"
+	}
 
 	goth.UseProviders(
-		google.New(googleClientId, googleClientSecret, "https://mdksoftware.io/auth/google/callback"),
+		google.New(googleClientId, googleClientSecret, callback_url),
 	)
 }

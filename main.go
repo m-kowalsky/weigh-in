@@ -5,7 +5,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,13 +19,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var tmpl *template.Template
-
 //go:embed templates/*
 var tmpls embed.FS
 
 //go:embed sql/schema/*
 var migrations embed.FS
+
+var tmpl *template.Template
 
 type Data struct {
 	Title string
@@ -33,7 +36,6 @@ const tmpl_path = "templates/*.html"
 
 type apiConfig struct {
 	db            *database.Queries
-	access_token  string
 	providerIndex *ProviderIndex
 }
 
@@ -53,11 +55,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer closeDb()
-
-	// err = setupDbSchema()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	// Goose migrations setup
 	goose.SetBaseFS(migrations)
@@ -84,11 +81,18 @@ func main() {
 		providerIndex: providerIndex,
 	}
 
+	// staticSubFS, _ := fs.Sub(staticFiles, "static")
+	// FileServer(r, "/css", http.FS(staticSubFS))
+	workDir, _ := os.Getwd()
+	staticDir := http.Dir(filepath.Join(workDir, "static"))
+	FileServer(r, "/static", staticDir)
+
+	// staticDir := http.Dir(filepath.Join(".", "static"))
+	// r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(staticDir)))
+
 	// Routes
-
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.ExecuteTemplate(w, "index.html", providerIndex)
-
+		tmpl.ExecuteTemplate(w, "login_page.html", providerIndex)
 	})
 	r.Get("/up/", apiCfg.handlerKamalHealthcheck)
 	r.Get("/logout/{provider}", apiCfg.handlerLogout)
@@ -137,4 +141,25 @@ func gothProviderSetup() *ProviderIndex {
 	providerIndex := &ProviderIndex{Providers: keys, ProvidersMap: m}
 
 	return providerIndex
+}
+
+// FileServer conveniently sets up a http.FileServer handler to serve
+// static files from a http.FileSystem.
+func FileServer(r chi.Router, path string, root http.FileSystem) {
+	if strings.ContainsAny(path, "{}*") {
+		panic("FileServer does not permit any URL parameters.")
+	}
+
+	if path != "/" && path[len(path)-1] != '/' {
+		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		path += "/"
+	}
+	path += "*"
+
+	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
+		rctx := chi.RouteContext(r.Context())
+		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
+		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
+		fs.ServeHTTP(w, r)
+	})
 }
