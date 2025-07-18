@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/gorilla/sessions"
+	// "github.com/joho/godotenv"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
@@ -19,11 +20,9 @@ const (
 
 func NewAuth() {
 
-	// if !IsProd {
-	// 	err := godotenv.Load()
-	// 	if err != nil {
-	// 		log.Fatal("Error loading .env file")
-	// 	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
 	// }
 
 	session_key := os.Getenv("SESSION_SECRET_KEY")
