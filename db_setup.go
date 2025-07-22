@@ -9,9 +9,9 @@ import (
 
 var Db *sql.DB
 
-func openDb() error {
+func openDb(dbPath string) error {
 
-	db, err := sql.Open("sqlite3", "/app/data/app.db")
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatal("Failed to open database")
 		return err

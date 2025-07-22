@@ -2,5 +2,6 @@
 .env
 /env
 .kamal/secrets
+./dev_test.db
 
 

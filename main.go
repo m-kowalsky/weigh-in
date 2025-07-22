@@ -46,12 +46,20 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	// Db open and setup. Create tables if they don't exist
-	err := openDb()
-	if err != nil {
-		log.Fatal(err)
+	if auth.IsProd {
+		// Db open and setup. Create tables if they don't exist
+		err := openDb("/app/data/app.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer closeDb()
+	} else {
+		err := openDb("./dev_test.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer closeDb()
 	}
-	defer closeDb()
 
 	// Goose migrations setup
 	goose.SetBaseFS(migrations)
@@ -65,7 +73,7 @@ func main() {
 	}
 
 	// Parse templates in /templates/*.html
-	err = parseHTMLTemplates(tmpl_path)
+	err := parseHTMLTemplates(tmpl_path)
 	if err != nil {
 		log.Fatal(err)
 	}
