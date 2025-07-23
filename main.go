@@ -29,6 +29,8 @@ type Data struct {
 	Body  string
 }
 
+const session_name = "user-session"
+
 const tmpl_path = "templates/*.html"
 
 type apiConfig struct {
@@ -95,6 +97,7 @@ func main() {
 	r.Get("/auth/{provider}", apiCfg.handlerGetAuth)
 	r.Get("/auth/{provider}/callback", apiCfg.handlerGetAuthCallback)
 	r.Get("/profile", apiCfg.handlerProfile)
+	r.Post("/user/{user_id}", apiCfg.handlerGetUser)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))

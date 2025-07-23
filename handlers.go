@@ -11,6 +11,9 @@ import (
 	"github.com/markbates/goth/gothic"
 )
 
+const sess_email = "user_email"
+const sess_userId = "user_id"
+
 func (apiCfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
@@ -18,9 +21,11 @@ func (apiCfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.
 
 func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
 
-	for _, cookie := range r.Cookies() {
-		fmt.Printf("\nGetAuthCallback-start cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
-	}
+	// Cookie debug
+	// for _, cookie := range r.Cookies() {
+	// 	fmt.Printf("\nGetAuthCallback-start cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
+	// }
+
 	// Get provider param from url for gothic auth
 	provider := chi.URLParam(r, "provider")
 	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
@@ -32,9 +37,11 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	for _, cookie := range r.Cookies() {
-		fmt.Printf("\nGetAuthCallback-end cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
-	}
+	// Cookie debug
+	// for _, cookie := range r.Cookies() {
+	// 	fmt.Printf("\nGetAuthCallback-end cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
+	// }
+
 	// Check if user exists in db already by getting a count of a user by email
 	count, err := apiCfg.db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
 	if err != nil {
@@ -64,14 +71,15 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 		fmt.Printf("current user: %v", new_user)
 	}
 
+	fmt.Printf("\nrefresh token : %v\n expries at: %v\n", goth_user.RefreshToken, goth_user.ExpiresAt)
 	// Create new session with user id and email
 
-	sess, err := gothic.Store.Get(r, "user_session")
+	sess, err := gothic.Store.Get(r, session_name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	sess.Values["user_email"] = goth_user.Email
-	sess.Values["user_id"] = goth_user.UserID
+	sess.Values[sess_email] = goth_user.Email
+	sess.Values[sess_userId] = goth_user.UserID
 	sess.Save(r, w)
 
 	http.Redirect(w, r, "/profile", http.StatusTemporaryRedirect)
@@ -79,9 +87,11 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 
 func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
 
-	for _, cookie := range r.Cookies() {
-		fmt.Printf("\nGetAuth cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
-	}
+	// Cookie debug
+	// for _, cookie := range r.Cookies() {
+	// 	fmt.Printf("\nGetAuth cookie: name: %v, value: %v\n", cookie.Name, cookie.Value)
+	// }
+
 	// try to get the user without re-authenticating
 	if gothUser, err := gothic.CompleteUserAuth(w, r); err == nil {
 		tmpl.ExecuteTemplate(w, "profile.html", gothUser)
@@ -93,7 +103,7 @@ func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) 
 func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 
 	// Logout a user by setting the current user_session max age to -1 which will cause the client to delete the cookie associated with the session
-	session, err := gothic.Store.Get(r, "user_session")
+	session, err := gothic.Store.Get(r, session_name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -108,14 +118,15 @@ func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 
 func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) {
 
-	sess, _ := gothic.Store.Get(r, "user_session")
+	sess, _ := gothic.Store.Get(r, session_name)
 	if sess.IsNew == true {
 		fmt.Println(sess.Options.MaxAge)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
-	email := sess.Values["user_email"].(string)
-	fmt.Printf("email from profile: %v", email)
+	email := sess.Values[sess_email].(string)
+	user_id := sess.Values[sess_userId].(string)
+	fmt.Printf("email and user_id from session: %v, %v\n", email, user_id)
 	current_user, err := apiCfg.db.GetUserByEmail(r.Context(), email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -134,4 +145,26 @@ func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) 
 
 	tmpl.ExecuteTemplate(w, "profile.html", data)
 
+}
+
+func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+	sess, err := gothic.Store.Get(r, session_name)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if sess.IsNew {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	user_email := sess.Values["email"].(string)
+
+	current_user, err := apiCfg.db.GetUserByEmail(r.Context(), user_email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	tmpl.ExecuteTemplate(w, "user", current_user)
 }
