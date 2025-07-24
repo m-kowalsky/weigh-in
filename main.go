@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -137,6 +138,7 @@ func gothProviderSetup() *ProviderIndex {
 	sort.Strings(keys)
 
 	providerIndex := &ProviderIndex{Providers: keys, ProvidersMap: m}
+	fmt.Printf("providers: %+v\n", providerIndex)
 
 	return providerIndex
 }
