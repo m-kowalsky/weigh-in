@@ -1,11 +1,21 @@
-<p><a href="/logout/{{.Provider}}">logout</a></p>
-<p>Name: {{.Name}} [{{.LastName}}, {{.FirstName}}]</p>
-<p>Email: {{.Email}}</p>
-<p>NickName: {{.NickName}}</p>
-<p>Location: {{.Location}}</p>
-<p>AvatarURL: {{.AvatarURL}} <img src="{{.AvatarURL}}"></p>
-<p>Description: {{.Description}}</p>
-<p>UserID: {{.UserID}}</p>
-<p>AccessToken: {{.AccessToken}}</p>
-<p>ExpiresAt: {{.ExpiresAt}}</p>
-<p>RefreshToken: {{.RefreshToken}}</p>
+{{ block "users" . }}
+
+<div>
+	<button hx-get="/user/{{ .ID }}" hx-target="#user-{{ .ID }}">Get Profile</button>
+
+</div>
+
+{{ end }}
+
+{{ block "user" . }}
+
+<ul>
+	<li>
+		ID: {{ .ID }}
+	</li>
+	<li>
+		Email: {{ .Email }}
+	</li>
+
+</ul>
+{{ end }}

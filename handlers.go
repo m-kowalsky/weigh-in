@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/m-kowalsky/weigh-in/internal/database"
 	"github.com/markbates/goth/gothic"
+	// "golang.org/x/tools/go/analysis/passes/stringintconv"
 )
 
 const sess_email = "user_email"
@@ -142,29 +144,35 @@ func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) 
 		User:      current_user,
 		Providers: apiCfg.providerIndex.Providers,
 	}
+	fmt.Printf("user from data - profile tmpl: %v\n", data.User)
 
-	tmpl.ExecuteTemplate(w, "profile.html", data)
-
+	err = tmpl.ExecuteTemplate(w, "profile.html", data.User)
+	if err != nil {
+		fmt.Printf("Template error: %v", err)
+		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
-	sess, err := gothic.Store.Get(r, session_name)
+	user_id := chi.URLParam(r, "user_id")
+
+	id_int, err := strconv.ParseInt(user_id, 16, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		http.Error(w, "Faile to convert user_id urlParam to int", http.StatusBadRequest)
 	}
 
-	if sess.IsNew {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	user_email := sess.Values["email"].(string)
-
-	current_user, err := apiCfg.db.GetUserByEmail(r.Context(), user_email)
+	current_user, err := apiCfg.db.GetUserById(r.Context(), id_int)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	fmt.Printf("user email from handerlGetUser before tmpl execute: %v\n", current_user.Email)
 
-	tmpl.ExecuteTemplate(w, "user", current_user)
+	err = tmpl.ExecuteTemplate(w, "user", current_user)
+	if err != nil {
+		fmt.Printf("Template error: %v", err)
+		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
+		return
+	}
 }

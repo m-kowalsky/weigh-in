@@ -5,10 +5,10 @@ go 1.24.1
 require (
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/gorilla/sessions v1.4.0
-	github.com/joho/godotenv v1.5.1
 	github.com/markbates/goth v1.81.0
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/pressly/goose/v3 v3.24.3
+	golang.org/x/tools v0.1.12
 )
 
 require (

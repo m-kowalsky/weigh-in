@@ -12,20 +12,14 @@
 </head>
 
 <body>
-	<button hx-get="/user/{{ .User.Id }}">Get Profile</button>
-	<div>
-		{{ template "user" .}}
+
+	<div id="user-{{ .ID }}">
+		<div>
+			{{ template "users" . }}
+		</div>
+
 	</div>
 </body>
 
 </html>
-{{ end }}
-
-{{ block "user" . }}
-
-<div id="user-{{ .Id }}">
-	ID: {{ .Id }}
-	Email: {{ .Email }}
-</div>
-
 {{ end }}
