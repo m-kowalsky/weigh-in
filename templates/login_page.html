@@ -6,31 +6,56 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Login – Weigh In</title>
-	<link rel="stylesheet" type="text/css" href="/static/login.css" />
+	<link href="./static/main.css" rel="stylesheet" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
+	<link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+	<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
 </head>
 
-<body>
-	<div class="login-container">
-		<div class="login-box">
-			<h1>Welcome to Weigh In</h1>
-			<p>Track your weight effortlessly</p>
-			{{ range .Providers }}
-			<a class="google-btn" href="/auth/{{ . }}">
-				<div class="google-icon-wrapper">
-					<svg class="google-icon" viewBox="0 0 533.5 544.3">
-						<path fill="#4285F4"
-							d="M533.5 278.4c0-17.8-1.6-35-4.6-51.6H272v97.7h146.9c-6.4 34.6-25 63.9-53.2 83.4v68h85.9c50.3-46.4 81.9-114.9 81.9-197.5z" />
-						<path fill="#34A853"
-							d="M272 544.3c72.6 0 133.6-24 178.1-65.1l-85.9-68c-23.8 16-54.2 25.4-92.2 25.4-70.8 0-130.8-47.8-152.3-111.7H31.6v70.2c44.3 87.5 135 149.2 240.4 149.2z" />
-						<path fill="#FBBC05"
-							d="M119.7 324.9c-10.3-30.1-10.3-62.6 0-92.7V162h-88.1C7.3 202.3 0 240.3 0 278.6c0 38.2 7.3 76.2 31.6 116.6l88.1-70.3z" />
-						<path fill="#EA4335"
-							d="M272 109.6c39.6 0 75.1 13.6 103.2 40.2l77.2-77.2C405.3 25.2 344.2 0 272 0 166.6 0 75.9 61.7 31.6 149.2l88.1 70.2c21.5-63.9 81.5-111.7 152.3-111.7z" />
-					</svg>
-				</div>
-				<span class="btn-text">Continue with {{ . }}</span>
+<body class="bg-gray-50 dark:bg-gray-900 font-sans">
+	<div class="min-h-screen flex flex-col items-center justify-center px-4">
+		<!-- Logo -->
+		<div class="flex flex-col items-center mb-8">
+			<svg width="100" height="100" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="none">
+				<defs>
+					<linearGradient id="blueGradient" x1="0" y1="0" x2="1" y2="1">
+						<stop offset="0%" stop-color="#00CFFF" />
+						<stop offset="100%" stop-color="#007BFF" />
+					</linearGradient>
+				</defs>
+				<rect x="20" y="20" width="160" height="160" rx="30" fill="url(#blueGradient)" />
+				<circle cx="100" cy="80" r="25" fill="white" />
+				<line x1="100" y1="80" x2="110" y2="65" stroke="#007BFF" stroke-width="4" stroke-linecap="round" />
+				<circle cx="100" cy="80" r="4" fill="#007BFF" />
+			</svg>
+			<h1 class="mt-4 text-4xl font-semibold text-gray-800 dark:text-white">Weigh In</h1>
+		</div>
+
+		<!-- Login Card -->
+		<div class="w-full max-w-md bg-white rounded-2xl shadow-md dark:bg-gray-800 p-8">
+			<h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6 text-center">Login</h2>
+
+			<!-- Google Button -->
+			<a href="/auth/google"
+				class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl transition bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700">
+				<svg class="w-5 h-5 fill-white" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg">
+					<path
+						d="M533.5 278.4c0-17.4-1.6-34.2-4.6-50.5H272v95.5h146.9c-6.4 34.4-25.7 63.5-54.5 83.1v68h87.9c51.4-47.3 81.2-117 81.2-196.1z"
+						fill="#4285F4" />
+					<path
+						d="M272 544.3c73.5 0 135.2-24.3 180.3-65.8l-87.9-68c-24.4 16.4-55.7 26-92.4 26-71 0-131.2-47.9-152.7-112.1H29.1v70.4c45.1 89 137.4 149.5 242.9 149.5z"
+						fill="#34A853" />
+					<path
+						d="M119.3 324.4c-10.1-30.2-10.1-62.6 0-92.8V161.2H29.1c-37.6 74.9-37.6 162.2 0 237.1l90.2-73.9z"
+						fill="#FBBC05" />
+					<path
+						d="M272 107.7c39.9 0 75.9 13.7 104.1 40.6l78.1-78.1C407.2 25 345.5 0 272 0 166.5 0 74.2 60.5 29.1 149.5l90.2 70.4C140.8 155.6 201 107.7 272 107.7z"
+						fill="#EA4335" />
+				</svg>
+				<span>Continue with Google</span>
 			</a>
-			{{ end }}
 		</div>
 	</div>
 </body>

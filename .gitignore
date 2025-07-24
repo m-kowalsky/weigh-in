@@ -3,5 +3,6 @@
 /env
 .kamal/secrets
 dev_test.db
+./node_modules
 
 
