@@ -84,22 +84,22 @@ func main() {
 	// Connect db created above to queries for sqlc
 	db_queries := database.New(Db)
 
-	apiCfg := apiConfig{
+	cfg := apiConfig{
 		db:            db_queries,
 		providerIndex: providerIndex,
 	}
 
 	// Routes
-	r.Get("/login", apiCfg.handlerLogin)
-	r.Get("/up/", apiCfg.handlerKamalHealthcheck)
-	r.Get("/logout/{provider}", apiCfg.handlerLogout)
-	r.Get("/auth/{provider}", apiCfg.handlerGetAuth)
-	r.Get("/auth/{provider}/callback", apiCfg.handlerGetAuthCallback)
-	r.Get("/", apiCfg.handlerIndex)
-	r.Get("/user/{user_id}", apiCfg.handlerGetUser)
-	r.Get("/weigh_in/new", apiCfg.handlerWeighInForm)
-	r.Get("/landing_page", apiCfg.handlerLandingPage)
-	r.Post("/weigh_in/create", apiCfg.handlerCreateWeighIn)
+	r.Get("/login", cfg.handlerLogin)
+	r.Get("/up/", cfg.handlerKamalHealthcheck)
+	r.Get("/logout/{provider}", cfg.handlerLogout)
+	r.Get("/auth/{provider}", cfg.handlerGetAuth)
+	r.Get("/auth/{provider}/callback", cfg.handlerGetAuthCallback)
+	r.Get("/", cfg.handlerIndex)
+	r.Get("/user/{user_id}", cfg.handlerGetUser)
+	r.Get("/weigh_in/new", cfg.handlerWeighInForm)
+	r.Get("/landing_page", cfg.handlerLandingPage)
+	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))

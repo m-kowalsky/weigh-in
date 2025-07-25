@@ -4,7 +4,6 @@
 
 <body>
 	{{ template "navbar" . }}
-	<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
 	<div>
 		<div>
 			<div class="w-fit flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl
@@ -19,9 +18,10 @@
 		<div>
 			{{ template "weigh_in_form" . }}
 		</div>
-		<div
-			class="w-full max-w-xl flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl transition bg-blue-600 hover:bg-blue-700">
-			<a href="/logout/google">
+		<div>
+
+			<a href="/logout/google"
+				class="w-full max-w-xl flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl transition bg-blue-600 hover:bg-blue-700">
 				<svg class="w-5 h-5 fill-white" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg">
 					<path
 						d="M533.5 278.4c0-17.4-1.6-34.2-4.6-50.5H272v95.5h146.9c-6.4 34.4-25.7 63.5-54.5 83.1v68h87.9c51.4-47.3 81.2-117 81.2-196.1z"

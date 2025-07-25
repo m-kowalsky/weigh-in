@@ -16,12 +16,12 @@ import (
 const sess_email = "user_email"
 const sess_userId = "user_id"
 
-func (apiCfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
+func (cfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Cookie debug
 	// for _, cookie := range r.Cookies() {
@@ -45,13 +45,13 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 	// }
 
 	// Check if user exists in db already by getting a count of a user by email
-	count, err := apiCfg.db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
+	count, err := cfg.db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if count == 1 {
-		current_user, err := apiCfg.db.GetUserByEmail(r.Context(), goth_user.Email)
+		current_user, err := cfg.db.GetUserByEmail(r.Context(), goth_user.Email)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -59,7 +59,7 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 
 		fmt.Printf("current user: %v", current_user)
 	} else {
-		new_user, err := apiCfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		new_user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 			Email:       goth_user.Email,
@@ -87,7 +87,7 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
 
 	// Cookie debug
 	// for _, cookie := range r.Cookies() {
@@ -102,7 +102,7 @@ func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 
 	// Logout a user by setting the current user_session max age to -1 which will cause the client to delete the cookie associated with the session
 	session, err := gothic.Store.Get(r, session_name)
@@ -118,7 +118,7 @@ func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
-func (apiCfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	sess, _ := gothic.Store.Get(r, session_name)
 	if sess.IsNew == true {
@@ -131,7 +131,7 @@ func (apiCfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("email and user_id from session: %v, %v\n", email, user_id)
 
-	current_user, err := apiCfg.db.GetUserByEmail(r.Context(), email)
+	current_user, err := cfg.db.GetUserByEmail(r.Context(), email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -145,7 +145,7 @@ func (apiCfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	data := ProfileData{
 		User:      current_user,
-		Providers: apiCfg.providerIndex.Providers,
+		Providers: cfg.providerIndex.Providers,
 		Title:     "Weigh In",
 	}
 	fmt.Printf("user from data - index tmpl: %v\n", data.User)
@@ -158,7 +158,7 @@ func (apiCfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	user_id := chi.URLParam(r, "user_id")
 
 	id_int, err := strconv.ParseInt(user_id, 16, 64)
@@ -166,7 +166,7 @@ func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Faile to convert user_id urlParam to int", http.StatusBadRequest)
 	}
 
-	current_user, err := apiCfg.db.GetUserById(r.Context(), id_int)
+	current_user, err := cfg.db.GetUserById(r.Context(), id_int)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -181,28 +181,28 @@ func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (apiCfg *apiConfig) handlerWeighInForm(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerWeighInForm(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
 
 }
 
-func (apiCfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "landing_page", nil)
 
 }
 
-func (apiCfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (apiCfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type PageData struct {
 		ProviderIndex *ProviderIndex
 		Title         string
 	}
 
 	data := PageData{
-		ProviderIndex: apiCfg.providerIndex,
+		ProviderIndex: cfg.providerIndex,
 		Title:         "Weigh In - Login",
 	}
 	err := tmpl.ExecuteTemplate(w, "login", data)

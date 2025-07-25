@@ -1,34 +1,13 @@
-{{ block "index" . }}
+{{ block "profile" . }}
 
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"
-		integrity="sha384-Akqfrbj/HpNVo8k11SXBb6TlBWmXXlYQrCSqEWmyKJe+hDm3Z/B2WVG4smwBkRVm"
-		crossorigin="anonymous"></script>
-	<title>Profile</title>
-</head>
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Login – Weigh In</title>
-	<link href="./static/main.css" rel="stylesheet" />
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
-	<link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
-	<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
-</head>
+{{ template "header" . }}
 
 <body>
 
+	{{ template "navbar" . }}
 	<div id="user-{{ .User.ID }}">
 		<div>
-			{{ template "users" .User }}
+			{{ template "user" .User }}
 		</div>
 		<div>
 			{{ template "weigh_in_form" . }}
