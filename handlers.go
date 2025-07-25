@@ -84,7 +84,7 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 	sess.Values[sess_userId] = goth_user.UserID
 	sess.Save(r, w)
 
-	http.Redirect(w, r, "/profile", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
 func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +96,7 @@ func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) 
 
 	// try to get the user without re-authenticating
 	if gothUser, err := gothic.CompleteUserAuth(w, r); err == nil {
-		tmpl.ExecuteTemplate(w, "profile.html", gothUser)
+		tmpl.ExecuteTemplate(w, "index", gothUser)
 	} else {
 		gothic.BeginAuthHandler(w, r)
 	}
@@ -115,20 +115,22 @@ func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
-func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) {
+func (apiCfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	sess, _ := gothic.Store.Get(r, session_name)
 	if sess.IsNew == true {
 		fmt.Println(sess.Options.MaxAge)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
 	email := sess.Values[sess_email].(string)
 	user_id := sess.Values[sess_userId].(string)
+
 	fmt.Printf("email and user_id from session: %v, %v\n", email, user_id)
+
 	current_user, err := apiCfg.db.GetUserByEmail(r.Context(), email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -138,15 +140,17 @@ func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) 
 	type ProfileData struct {
 		User      database.User
 		Providers []string
+		Title     string
 	}
 
 	data := ProfileData{
 		User:      current_user,
 		Providers: apiCfg.providerIndex.Providers,
+		Title:     "Weigh In",
 	}
-	fmt.Printf("user from data - profile tmpl: %v\n", data.User)
+	fmt.Printf("user from data - index tmpl: %v\n", data.User)
 
-	err = tmpl.ExecuteTemplate(w, "profile.html", data.User)
+	err = tmpl.ExecuteTemplate(w, "index", data)
 	if err != nil {
 		fmt.Printf("Template error: %v", err)
 		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
@@ -170,6 +174,38 @@ func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) 
 	fmt.Printf("user email from handerlGetUser before tmpl execute: %v\n", current_user.Email)
 
 	err = tmpl.ExecuteTemplate(w, "user", current_user)
+	if err != nil {
+		fmt.Printf("Template error: %v", err)
+		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (apiCfg *apiConfig) handlerWeighInForm(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
+
+}
+
+func (apiCfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, "landing_page", nil)
+
+}
+
+func (apiCfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (apiCfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
+	type PageData struct {
+		ProviderIndex *ProviderIndex
+		Title         string
+	}
+
+	data := PageData{
+		ProviderIndex: apiCfg.providerIndex,
+		Title:         "Weigh In - Login",
+	}
+	err := tmpl.ExecuteTemplate(w, "login", data)
 	if err != nil {
 		fmt.Printf("Template error: %v", err)
 		http.Error(w, "Template rendering failed", http.StatusInternalServerError)

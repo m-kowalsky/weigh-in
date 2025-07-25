@@ -90,15 +90,16 @@ func main() {
 	}
 
 	// Routes
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.ExecuteTemplate(w, "login_page.html", providerIndex)
-	})
+	r.Get("/login", apiCfg.handlerLogin)
 	r.Get("/up/", apiCfg.handlerKamalHealthcheck)
 	r.Get("/logout/{provider}", apiCfg.handlerLogout)
 	r.Get("/auth/{provider}", apiCfg.handlerGetAuth)
 	r.Get("/auth/{provider}/callback", apiCfg.handlerGetAuthCallback)
-	r.Get("/profile", apiCfg.handlerProfile)
+	r.Get("/", apiCfg.handlerIndex)
 	r.Get("/user/{user_id}", apiCfg.handlerGetUser)
+	r.Get("/weigh_in/new", apiCfg.handlerWeighInForm)
+	r.Get("/landing_page", apiCfg.handlerLandingPage)
+	r.Post("/weigh_in/create", apiCfg.handlerCreateWeighIn)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
