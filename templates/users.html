@@ -1,14 +1,4 @@
-{{ block "users" . }}
-
-<div>
-	<button hx-get="/user/{{ .ID }}" hx-target="#user-{{ .ID }}">Get Profile</button>
-
-</div>
-
-{{ end }}
-
 {{ block "user" . }}
-
 <ul>
 	<li>
 		ID: {{ .ID }}

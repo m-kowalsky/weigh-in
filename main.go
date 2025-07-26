@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -28,6 +29,16 @@ var tmpl *template.Template
 type Data struct {
 	Title string
 	Body  string
+}
+
+type WeighIn struct {
+	Weight      int64
+	WeightUnit  string
+	LogDate     time.Time
+	Note        string
+	Cheated     bool
+	Alcohol     bool
+	WeighInDiet string
 }
 
 const session_name = "user-session"
@@ -84,21 +95,22 @@ func main() {
 	// Connect db created above to queries for sqlc
 	db_queries := database.New(Db)
 
-	apiCfg := apiConfig{
+	cfg := apiConfig{
 		db:            db_queries,
 		providerIndex: providerIndex,
 	}
 
 	// Routes
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.ExecuteTemplate(w, "login_page.html", providerIndex)
-	})
-	r.Get("/up/", apiCfg.handlerKamalHealthcheck)
-	r.Get("/logout/{provider}", apiCfg.handlerLogout)
-	r.Get("/auth/{provider}", apiCfg.handlerGetAuth)
-	r.Get("/auth/{provider}/callback", apiCfg.handlerGetAuthCallback)
-	r.Get("/profile", apiCfg.handlerProfile)
-	r.Get("/user/{user_id}", apiCfg.handlerGetUser)
+	r.Get("/login", cfg.handlerLogin)
+	r.Get("/up/", cfg.handlerKamalHealthcheck)
+	r.Get("/logout/{provider}", cfg.handlerLogout)
+	r.Get("/auth/{provider}", cfg.handlerGetAuth)
+	r.Get("/auth/{provider}/callback", cfg.handlerGetAuthCallback)
+	r.Get("/", cfg.handlerIndex)
+	r.Get("/user/{user_id}", cfg.handlerGetUser)
+	r.Post("/weigh_in/new", cfg.handlerCreateWeighIn)
+	r.Get("/landing_page", cfg.handlerLandingPage)
+	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))

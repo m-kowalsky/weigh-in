@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,12 +17,12 @@ import (
 const sess_email = "user_email"
 const sess_userId = "user_id"
 
-func (apiCfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
+func (cfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Cookie debug
 	// for _, cookie := range r.Cookies() {
@@ -45,13 +46,13 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 	// }
 
 	// Check if user exists in db already by getting a count of a user by email
-	count, err := apiCfg.db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
+	count, err := cfg.db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if count == 1 {
-		current_user, err := apiCfg.db.GetUserByEmail(r.Context(), goth_user.Email)
+		current_user, err := cfg.db.GetUserByEmail(r.Context(), goth_user.Email)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -59,7 +60,7 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 
 		fmt.Printf("current user: %v", current_user)
 	} else {
-		new_user, err := apiCfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		new_user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 			Email:       goth_user.Email,
@@ -82,12 +83,13 @@ func (apiCfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.R
 	}
 	sess.Values[sess_email] = goth_user.Email
 	sess.Values[sess_userId] = goth_user.UserID
+	sess.AddFlash("Weigh In Created!", "weigh in successful")
 	sess.Save(r, w)
 
-	http.Redirect(w, r, "/profile", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
 
 	// Cookie debug
 	// for _, cookie := range r.Cookies() {
@@ -96,13 +98,13 @@ func (apiCfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) 
 
 	// try to get the user without re-authenticating
 	if gothUser, err := gothic.CompleteUserAuth(w, r); err == nil {
-		tmpl.ExecuteTemplate(w, "profile.html", gothUser)
+		tmpl.ExecuteTemplate(w, "index", gothUser)
 	} else {
 		gothic.BeginAuthHandler(w, r)
 	}
 }
 
-func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 
 	// Logout a user by setting the current user_session max age to -1 which will cause the client to delete the cookie associated with the session
 	session, err := gothic.Store.Get(r, session_name)
@@ -115,21 +117,23 @@ func (apiCfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
-func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	sess, _ := gothic.Store.Get(r, session_name)
 	if sess.IsNew == true {
 		fmt.Println(sess.Options.MaxAge)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
 	email := sess.Values[sess_email].(string)
 	user_id := sess.Values[sess_userId].(string)
+
 	fmt.Printf("email and user_id from session: %v, %v\n", email, user_id)
-	current_user, err := apiCfg.db.GetUserByEmail(r.Context(), email)
+
+	current_user, err := cfg.db.GetUserByEmail(r.Context(), email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -138,15 +142,17 @@ func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) 
 	type ProfileData struct {
 		User      database.User
 		Providers []string
+		Title     string
 	}
 
 	data := ProfileData{
 		User:      current_user,
-		Providers: apiCfg.providerIndex.Providers,
+		Providers: cfg.providerIndex.Providers,
+		Title:     "Weigh In",
 	}
-	fmt.Printf("user from data - profile tmpl: %v\n", data.User)
+	fmt.Printf("user from data - index tmpl: %v\n", data.User)
 
-	err = tmpl.ExecuteTemplate(w, "profile.html", data.User)
+	err = tmpl.ExecuteTemplate(w, "index", data)
 	if err != nil {
 		fmt.Printf("Template error: %v", err)
 		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
@@ -154,7 +160,7 @@ func (apiCfg *apiConfig) handlerProfile(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	user_id := chi.URLParam(r, "user_id")
 
 	id_int, err := strconv.ParseInt(user_id, 16, 64)
@@ -162,7 +168,7 @@ func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Faile to convert user_id urlParam to int", http.StatusBadRequest)
 	}
 
-	current_user, err := apiCfg.db.GetUserById(r.Context(), id_int)
+	current_user, err := cfg.db.GetUserById(r.Context(), id_int)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -170,6 +176,97 @@ func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) 
 	fmt.Printf("user email from handerlGetUser before tmpl execute: %v\n", current_user.Email)
 
 	err = tmpl.ExecuteTemplate(w, "user", current_user)
+	if err != nil {
+		fmt.Printf("Template error: %v", err)
+		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
+		return
+	}
+}
+
+// func (cfg *apiConfig) handlerWeighInForm(w http.ResponseWriter, r *http.Request) {
+// 	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
+//
+// }
+
+func (cfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, "landing_page", nil)
+
+}
+
+func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
+
+	sess, _ := gothic.Store.Get(r, session_name)
+	if sess.IsNew == true {
+		fmt.Println(sess.Options.MaxAge)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	flash_message := sess.Flashes("weigh in successful")
+
+	// convert weight string to int64
+	weight, err := strconv.ParseInt(r.FormValue("weight"), 10, 64)
+	if err != nil {
+		http.Error(w, "Failed to parse weight to int64", http.StatusBadRequest)
+		return
+	}
+
+	// convert cheated and alcohol string to bool
+	cheated := false
+	alcohol := false
+	if r.FormValue("cheated") == "on" {
+		cheated = true
+	}
+	if r.FormValue("alcohol") == "on" {
+		alcohol = true
+	}
+
+	fmt.Printf("note: %v\n", r.FormValue("note"))
+	fmt.Printf("note data type: %T\n", r.FormValue("note"))
+
+	// convert log date string to time.Time
+	time_layout := "2006-01-02"
+	log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
+
+	new_weigh_in := WeighIn{
+		Weight:      weight,
+		WeightUnit:  r.FormValue("weight_unit"),
+		LogDate:     log_date,
+		Cheated:     cheated,
+		Alcohol:     alcohol,
+		Note:        r.FormValue("note"),
+		WeighInDiet: r.FormValue("weigh_in_diet"),
+	}
+	weighInNew, err := cfg.db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Weight:      new_weigh_in.Weight,
+		WeightUnit:  new_weigh_in.WeightUnit,
+		LogDate:     new_weigh_in.LogDate,
+		Cheated:     new_weigh_in.Cheated,
+		Alcohol:     new_weigh_in.Alcohol,
+		Note:        sql.NullString{String: new_weigh_in.Note, Valid: true},
+		WeighInDiet: new_weigh_in.WeighInDiet,
+	})
+	if err != nil {
+		http.Error(w, "Failed to create new weigh in", http.StatusBadRequest)
+		return
+	}
+	fmt.Fprintf(w, "%v", flash_message...)
+	fmt.Printf("weigh in: %+v\n", weighInNew)
+}
+
+func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
+	type PageData struct {
+		ProviderIndex *ProviderIndex
+		Title         string
+	}
+
+	data := PageData{
+		ProviderIndex: cfg.providerIndex,
+		Title:         "Weigh In - Login",
+	}
+	err := tmpl.ExecuteTemplate(w, "login", data)
 	if err != nil {
 		fmt.Printf("Template error: %v", err)
 		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
