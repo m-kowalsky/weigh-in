@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -82,7 +83,7 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 	}
 	sess.Values[sess_email] = goth_user.Email
 	sess.Values[sess_userId] = goth_user.UserID
-	sess.AddFlash("Weight Received!", "weight")
+	sess.AddFlash("Weigh In Created!", "weigh in successful")
 	sess.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
@@ -193,6 +194,7 @@ func (cfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request)
 }
 
 func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
+
 	sess, _ := gothic.Store.Get(r, session_name)
 	if sess.IsNew == true {
 		fmt.Println(sess.Options.MaxAge)
@@ -200,46 +202,58 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	flash_message := sess.Flashes("weight")
-	// convert weight string to int64
-	// weight, err := strconv.ParseInt(r.FormValue("weight"), 10, 64)
-	// if err != nil {
-	// 	http.Error(w, "Failed to parse weight to int64", http.StatusBadRequest)
-	// }
-	//
-	// // convert cheated and alcohol string to bool
-	// cheated, err := strconv.ParseBool(r.FormValue("cheated"))
-	// if err != nil {
-	// 	http.Error(w, "Failed to parse cheated to bool", http.StatusBadRequest)
-	// }
-	// alcohol, err := strconv.ParseBool(r.FormValue("alcohol"))
-	// if err != nil {
-	// 	http.Error(w, "Failed to parse alcohol to bool", http.StatusBadRequest)
-	// }
-	//
-	// // convert log date string to time.Time
-	// time_layout := "2006-01-02"
-	// log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
-	//
-	// new_weigh_in := WeighIn{
-	// 	Weight:      weight,
-	// 	WeightUnit:  r.FormValue("weight_unit"),
-	// 	LogDate:     log_date,
-	// 	Cheated:     cheated,
-	// 	Alcohol:     alcohol,
-	// 	Note:        r.FormValue("note"),
-	// 	WeighInDiet: r.FormValue("weigh_in_diet"),
-	// }
-	fmt.Fprintf(w, "%v", flash_message...)
-	// fmt.Printf("log date: %v\n", r.FormValue("log_date"))
-	// fmt.Printf("logdate from new weigh in: %v\n", new_weigh_in.LogDate)
+	flash_message := sess.Flashes("weigh in successful")
 
-	// err = tmpl.ExecuteTemplate(w, "weight", new_weigh_in)
-	// if err != nil {
-	// 	fmt.Printf("Template error: %v", err)
-	// 	http.Error(w, "Template rendering failed", http.StatusInternalServerError)
-	// 	return
-	// }
+	// convert weight string to int64
+	weight, err := strconv.ParseInt(r.FormValue("weight"), 10, 64)
+	if err != nil {
+		http.Error(w, "Failed to parse weight to int64", http.StatusBadRequest)
+		return
+	}
+
+	// convert cheated and alcohol string to bool
+	cheated := false
+	alcohol := false
+	if r.FormValue("cheated") == "on" {
+		cheated = true
+	}
+	if r.FormValue("alcohol") == "on" {
+		alcohol = true
+	}
+
+	fmt.Printf("note: %v\n", r.FormValue("note"))
+	fmt.Printf("note data type: %T\n", r.FormValue("note"))
+
+	// convert log date string to time.Time
+	time_layout := "2006-01-02"
+	log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
+
+	new_weigh_in := WeighIn{
+		Weight:      weight,
+		WeightUnit:  r.FormValue("weight_unit"),
+		LogDate:     log_date,
+		Cheated:     cheated,
+		Alcohol:     alcohol,
+		Note:        r.FormValue("note"),
+		WeighInDiet: r.FormValue("weigh_in_diet"),
+	}
+	weighInNew, err := cfg.db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Weight:      new_weigh_in.Weight,
+		WeightUnit:  new_weigh_in.WeightUnit,
+		LogDate:     new_weigh_in.LogDate,
+		Cheated:     new_weigh_in.Cheated,
+		Alcohol:     new_weigh_in.Alcohol,
+		Note:        sql.NullString{String: new_weigh_in.Note, Valid: true},
+		WeighInDiet: new_weigh_in.WeighInDiet,
+	})
+	if err != nil {
+		http.Error(w, "Failed to create new weigh in", http.StatusBadRequest)
+		return
+	}
+	fmt.Fprintf(w, "%v", flash_message...)
+	fmt.Printf("weigh in: %+v\n", weighInNew)
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
