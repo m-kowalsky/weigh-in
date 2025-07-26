@@ -6,9 +6,10 @@
 	{{ template "navbar" . }}
 	<div>
 		<div>
-			<div class="w-fit flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl
+			<div class="w-full max-w-xl">
+				<button hx-get="/user/{{ .User.ID }}" hx-swap="outerHTML" hx-target="#user-{{ .User.ID }}"
+					hx-push-url="true" hx-confirm="Are you sure?" class="w-fit flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl
 				bg-blue-600 hover:bg-blue-700">
-				<button hx-get="/user/{{ .User.ID }}" hx-swap="outerHTML" hx-target="#user-{{ .User.ID }}">
 					Get Profile</button>
 			</div>
 
@@ -18,8 +19,9 @@
 		<div>
 			{{ template "weigh_in_form" . }}
 		</div>
+		<div id="weight">
+		</div>
 		<div>
-
 			<a href="/logout/google"
 				class="w-full max-w-xl flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl transition bg-blue-600 hover:bg-blue-700">
 				<svg class="w-5 h-5 fill-white" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg">

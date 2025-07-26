@@ -82,6 +82,7 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 	}
 	sess.Values[sess_email] = goth_user.Email
 	sess.Values[sess_userId] = goth_user.UserID
+	sess.AddFlash("Weight Received!", "weight")
 	sess.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
@@ -181,10 +182,10 @@ func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cfg *apiConfig) handlerWeighInForm(w http.ResponseWriter, r *http.Request) {
-	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
-
-}
+// func (cfg *apiConfig) handlerWeighInForm(w http.ResponseWriter, r *http.Request) {
+// 	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
+//
+// }
 
 func (cfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "landing_page", nil)
@@ -192,7 +193,53 @@ func (cfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request)
 }
 
 func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
+	sess, _ := gothic.Store.Get(r, session_name)
+	if sess.IsNew == true {
+		fmt.Println(sess.Options.MaxAge)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
 
+	flash_message := sess.Flashes("weight")
+	// convert weight string to int64
+	// weight, err := strconv.ParseInt(r.FormValue("weight"), 10, 64)
+	// if err != nil {
+	// 	http.Error(w, "Failed to parse weight to int64", http.StatusBadRequest)
+	// }
+	//
+	// // convert cheated and alcohol string to bool
+	// cheated, err := strconv.ParseBool(r.FormValue("cheated"))
+	// if err != nil {
+	// 	http.Error(w, "Failed to parse cheated to bool", http.StatusBadRequest)
+	// }
+	// alcohol, err := strconv.ParseBool(r.FormValue("alcohol"))
+	// if err != nil {
+	// 	http.Error(w, "Failed to parse alcohol to bool", http.StatusBadRequest)
+	// }
+	//
+	// // convert log date string to time.Time
+	// time_layout := "2006-01-02"
+	// log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
+	//
+	// new_weigh_in := WeighIn{
+	// 	Weight:      weight,
+	// 	WeightUnit:  r.FormValue("weight_unit"),
+	// 	LogDate:     log_date,
+	// 	Cheated:     cheated,
+	// 	Alcohol:     alcohol,
+	// 	Note:        r.FormValue("note"),
+	// 	WeighInDiet: r.FormValue("weigh_in_diet"),
+	// }
+	fmt.Fprintf(w, "%v", flash_message...)
+	// fmt.Printf("log date: %v\n", r.FormValue("log_date"))
+	// fmt.Printf("logdate from new weigh in: %v\n", new_weigh_in.LogDate)
+
+	// err = tmpl.ExecuteTemplate(w, "weight", new_weigh_in)
+	// if err != nil {
+	// 	fmt.Printf("Template error: %v", err)
+	// 	http.Error(w, "Template rendering failed", http.StatusInternalServerError)
+	// 	return
+	// }
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {

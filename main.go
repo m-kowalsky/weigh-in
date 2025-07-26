@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -28,6 +29,16 @@ var tmpl *template.Template
 type Data struct {
 	Title string
 	Body  string
+}
+
+type WeighIn struct {
+	Weight      int64
+	WeightUnit  string
+	LogDate     time.Time
+	Note        string
+	Cheated     bool
+	Alcohol     bool
+	WeighInDiet string
 }
 
 const session_name = "user-session"
@@ -97,7 +108,7 @@ func main() {
 	r.Get("/auth/{provider}/callback", cfg.handlerGetAuthCallback)
 	r.Get("/", cfg.handlerIndex)
 	r.Get("/user/{user_id}", cfg.handlerGetUser)
-	r.Get("/weigh_in/new", cfg.handlerWeighInForm)
+	r.Post("/weigh_in/new", cfg.handlerCreateWeighIn)
 	r.Get("/landing_page", cfg.handlerLandingPage)
 	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
 

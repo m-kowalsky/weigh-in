@@ -1,9 +1,9 @@
 {{ block "weigh_in_form" . }}
 <!-- Weigh-In Card -->
-<div class="w-full max-w-xl bg-white rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-6">
+<div class="w-full max-w-xl m-4 bg-white rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-6">
 	<h2 class="text-2xl font-bold text-gray-800 dark:text-white">Weigh-In Entry</h2>
 
-	<form method="POST" action="/submit-weigh-in" class="space-y-5">
+	<form class="space-y-5">
 
 		<!-- Weight -->
 		<div>
@@ -62,7 +62,8 @@
 		<!-- Submit Button -->
 		<div>
 			<button type="submit"
-				class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl transition bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700">
+				class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl transition bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700"
+				hx-post="/weigh_in/new">
 				Submit
 			</button>
 		</div>
