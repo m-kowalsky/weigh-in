@@ -65,7 +65,8 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 			UpdatedAt:   time.Now(),
 			Email:       goth_user.Email,
 			AccessToken: goth_user.AccessToken,
-			FullName:    goth_user.Name,
+			FullName:    sql.NullString{String: goth_user.Name, Valid: true},
+			Provider:    provider,
 		})
 		if err != nil {
 			http.Error(w, "problem creating new user", http.StatusBadRequest)
@@ -137,18 +138,18 @@ func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	fmt.Printf("\ncurrent user: %s\n", current_user.FullName)
+	fmt.Printf("\ncurrent user: %s\n", current_user.FullName.String)
 
 	type ProfileData struct {
-		User      database.User
-		Providers []string
-		Title     string
+		User     database.User
+		Provider string
+		Title    string
 	}
 
 	data := ProfileData{
-		User:      current_user,
-		Providers: cfg.providerIndex.Providers,
-		Title:     "Weigh In",
+		User:     current_user,
+		Provider: current_user.Provider,
+		Title:    "Weigh In",
 	}
 	fmt.Printf("user from data - index tmpl: %v\n", data.User)
 
@@ -183,10 +184,10 @@ func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (cfg *apiConfig) handlerWeighInForm(w http.ResponseWriter, r *http.Request) {
-// 	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
-//
-// }
+func (cfg *apiConfig) handlerWeighInNew(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
+
+}
 
 func (cfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "landing_page", nil)
@@ -228,32 +229,24 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 	time_layout := "2006-01-02"
 	log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
 
-	new_weigh_in := WeighIn{
+	weighInNew, err := cfg.db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 		Weight:      weight,
 		WeightUnit:  r.FormValue("weight_unit"),
 		LogDate:     log_date,
 		Cheated:     cheated,
 		Alcohol:     alcohol,
-		Note:        r.FormValue("note"),
+		Note:        sql.NullString{String: r.FormValue("note"), Valid: true},
 		WeighInDiet: r.FormValue("weigh_in_diet"),
-	}
-	weighInNew, err := cfg.db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Weight:      new_weigh_in.Weight,
-		WeightUnit:  new_weigh_in.WeightUnit,
-		LogDate:     new_weigh_in.LogDate,
-		Cheated:     new_weigh_in.Cheated,
-		Alcohol:     new_weigh_in.Alcohol,
-		Note:        sql.NullString{String: new_weigh_in.Note, Valid: true},
-		WeighInDiet: new_weigh_in.WeighInDiet,
 	})
 	if err != nil {
 		http.Error(w, "Failed to create new weigh in", http.StatusBadRequest)
 		return
 	}
-	fmt.Fprintf(w, "%v", flash_message...)
+	// fmt.Fprint(w, "WEIGH IN CREATED")
 	fmt.Printf("weigh in: %+v\n", weighInNew)
+	tmpl.ExecuteTemplate(w, "success", flash_message[0])
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {

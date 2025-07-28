@@ -1,6 +1,6 @@
 -- name: CreateUser :one
-Insert into users (created_at, updated_at, email, access_token, full_name)
-Values ( ?, ?, ?, ?, ?)
+Insert into users (created_at, updated_at, email, access_token, full_name, provider)
+Values ( ?, ?, ?, ?, ?, ?)
 Returning *;
 
 -- name: GetUserByEmail :one
