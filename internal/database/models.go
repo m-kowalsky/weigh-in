@@ -11,7 +11,7 @@ import (
 
 type Diet struct {
 	ID       int64
-	DietType sql.NullString
+	DietType string
 }
 
 type User struct {
@@ -19,8 +19,9 @@ type User struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	Email       string
-	AccessToken interface{}
-	FullName    interface{}
+	AccessToken string
+	FullName    sql.NullString
+	Provider    string
 }
 
 type WeighIn struct {

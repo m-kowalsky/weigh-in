@@ -108,7 +108,8 @@ func main() {
 	r.Get("/auth/{provider}/callback", cfg.handlerGetAuthCallback)
 	r.Get("/", cfg.handlerIndex)
 	r.Get("/user/{user_id}", cfg.handlerGetUser)
-	r.Post("/weigh_in/new", cfg.handlerCreateWeighIn)
+	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
+	r.Get("/weigh_in/new", cfg.handlerWeighInNew)
 	r.Get("/landing_page", cfg.handlerLandingPage)
 	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
 

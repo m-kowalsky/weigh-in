@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -22,17 +23,18 @@ func (q *Queries) CheckIfUserExistsByEmail(ctx context.Context, email string) (i
 }
 
 const createUser = `-- name: CreateUser :one
-Insert into users (created_at, updated_at, email, access_token, full_name)
-Values ( ?, ?, ?, ?, ?)
-Returning id, created_at, updated_at, email, access_token, full_name
+Insert into users (created_at, updated_at, email, access_token, full_name, provider)
+Values ( ?, ?, ?, ?, ?, ?)
+Returning id, created_at, updated_at, email, access_token, full_name, provider
 `
 
 type CreateUserParams struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	Email       string
-	AccessToken interface{}
-	FullName    interface{}
+	AccessToken string
+	FullName    sql.NullString
+	Provider    string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -42,6 +44,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Email,
 		arg.AccessToken,
 		arg.FullName,
+		arg.Provider,
 	)
 	var i User
 	err := row.Scan(
@@ -51,12 +54,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.AccessToken,
 		&i.FullName,
+		&i.Provider,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-Select id, created_at, updated_at, email, access_token, full_name From users
+Select id, created_at, updated_at, email, access_token, full_name, provider From users
 Where email = ?
 `
 
@@ -70,12 +74,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.AccessToken,
 		&i.FullName,
+		&i.Provider,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-Select id, created_at, updated_at, email, access_token, full_name from users
+Select id, created_at, updated_at, email, access_token, full_name, provider from users
 Where id = ?
 `
 
@@ -89,6 +94,7 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (User, error) {
 		&i.Email,
 		&i.AccessToken,
 		&i.FullName,
+		&i.Provider,
 	)
 	return i, err
 }

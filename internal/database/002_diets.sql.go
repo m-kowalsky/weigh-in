@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createDiet = `-- name: CreateDiet :one
@@ -16,7 +15,7 @@ Values ( ? )
 Returning id, diet_type
 `
 
-func (q *Queries) CreateDiet(ctx context.Context, dietType sql.NullString) (Diet, error) {
+func (q *Queries) CreateDiet(ctx context.Context, dietType string) (Diet, error) {
 	row := q.db.QueryRowContext(ctx, createDiet, dietType)
 	var i Diet
 	err := row.Scan(&i.ID, &i.DietType)

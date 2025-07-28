@@ -1,13 +1,13 @@
 {{ block "weigh_in_form" . }}
 <!-- Weigh-In Card -->
-<div class="w-full max-w-xl m-4 bg-white rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-6">
-	<h2 class="text-2xl font-bold text-gray-800 dark:text-white">Weigh-In Entry</h2>
+<div
+	class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-lg bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-6">
+	<h2 class="text-2xl font-bold text-gray-800 text-center dark:text-white">Weigh-In Entry</h2>
 
 	<form class="space-y-5">
-
 		<!-- Weight -->
 		<div>
-			<label for="weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Weight</label>
+			<label for="weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Weight*</label>
 			<input type="number" name="weight" id="weight" required
 				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2" />
 		</div>
@@ -15,7 +15,7 @@
 		<!-- Weight Unit -->
 		<div>
 			<label for="weight_unit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Weight
-				Unit</label>
+				Unit*</label>
 			<select name="weight_unit" id="weight_unit"
 				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2">
 				<option value="lbs" selected>lbs</option>
@@ -25,7 +25,8 @@
 
 		<!-- Log Date -->
 		<div>
-			<label for="log_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Log Date</label>
+			<label for="log_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Log
+				Date*</label>
 			<input type="date" name="log_date" id="log_date"
 				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2"
 				value="<?= date('Y-m-d') ?>" />
@@ -54,7 +55,7 @@
 
 		<!-- Weigh-In Diet -->
 		<div>
-			<label for="weigh_in_diet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Diet</label>
+			<label for="weigh_in_diet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Diet*</label>
 			<input type="text" name="weigh_in_diet" id="weigh_in_diet"
 				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2" />
 		</div>
@@ -62,11 +63,12 @@
 		<!-- Submit Button -->
 		<div>
 			<button type="submit"
-				class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl transition bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700"
-				hx-post="/weigh_in/new">
+				class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl bg-blue-500 hover:bg-blue-700"
+				hx-post="/weigh_in/create" hx-target="#success">
 				Submit
 			</button>
 		</div>
 	</form>
+	<p class="text-gray-500 text-left">*required</p>
 </div>
 {{ end }}
