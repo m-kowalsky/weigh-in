@@ -203,7 +203,7 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	flash_message := sess.Flashes("weigh in successful")
+	// flash_message := sess.Flashes("weigh in successful")
 
 	// convert weight string to int64
 	weight, err := strconv.ParseInt(r.FormValue("weight"), 10, 64)
@@ -244,9 +244,9 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Failed to create new weigh in", http.StatusBadRequest)
 		return
 	}
-	// fmt.Fprint(w, "WEIGH IN CREATED")
+	fmt.Fprint(w, "WEIGH IN CREATED")
 	fmt.Printf("weigh in: %+v\n", weighInNew)
-	tmpl.ExecuteTemplate(w, "success", flash_message[0])
+	// tmpl.ExecuteTemplate(w, "success", flash_message[0])
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
