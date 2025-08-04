@@ -84,7 +84,7 @@ func main() {
 	}
 
 	if err := goose.Up(Db, "sql/schema"); err != nil {
-		log.Fatal("Error running database migrations")
+		log.Fatalf("Error running database migrations: %v\n", err)
 	}
 
 	// Parse templates in /templates/*.html

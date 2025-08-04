@@ -125,7 +125,7 @@ func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	current_user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
-		http.Error(w, "Failed to get current user", http.StatusBadRequest)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
 
 	type ProfileData struct {
@@ -195,7 +195,7 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 
 	current_user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
-		http.Error(w, "Failed to get current user", http.StatusBadRequest)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
 
 	// convert weight string to int64
@@ -284,7 +284,7 @@ func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) (Char
 
 	user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
-		http.Error(w, "Failed to get current user", http.StatusBadRequest)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
 	weighIn_data, err := cfg.db.GetWeightChartDataByUser(r.Context(), user.ID)
 	if err != nil {
