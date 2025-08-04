@@ -3,6 +3,6 @@
 /env
 .kamal/secrets
 dev_test.db
-./node_modules/
+/node_modules
 .air.toml
 
