@@ -35,4 +35,5 @@ type WeighIn struct {
 	Cheated     bool
 	Alcohol     bool
 	WeighInDiet string
+	UserID      int64
 }

@@ -4,14 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-echarts/go-echarts/v2/charts"
+	"github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/m-kowalsky/weigh-in/internal/database"
 	"github.com/markbates/goth/gothic"
-	// "golang.org/x/tools/go/analysis/passes/stringintconv"
 )
 
 const sess_email = "user_email"
@@ -75,7 +77,6 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 		fmt.Printf("current user: %v", new_user)
 	}
 
-	fmt.Printf("\nrefresh token : %v\n expries at: %v\n", goth_user.RefreshToken, goth_user.ExpiresAt)
 	// Create new session with user id and email
 
 	sess, err := gothic.Store.Get(r, session_name)
@@ -84,7 +85,6 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 	}
 	sess.Values[sess_email] = goth_user.Email
 	sess.Values[sess_userId] = goth_user.UserID
-	sess.AddFlash("Weigh In Created!", "weigh in successful")
 	sess.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
@@ -123,35 +123,32 @@ func (cfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
-	sess, _ := gothic.Store.Get(r, session_name)
-	if sess.IsNew == true {
-		fmt.Println(sess.Options.MaxAge)
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-	email := sess.Values[sess_email].(string)
-	user_id := sess.Values[sess_userId].(string)
-
-	fmt.Printf("email and user_id from session: %v, %v\n", email, user_id)
-
-	current_user, err := cfg.db.GetUserByEmail(r.Context(), email)
+	current_user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Failed to get current user", http.StatusBadRequest)
 	}
-	fmt.Printf("\ncurrent user: %s\n", current_user.FullName.String)
 
 	type ProfileData struct {
-		User     database.User
-		Provider string
-		Title    string
+		User      database.User
+		Provider  string
+		Title     string
+		ChartHTML template.HTML
 	}
+	chart_data, err := cfg.getChartData(w, r)
+	if err != nil {
+		http.Error(w, "Failed to get chart data", http.StatusBadRequest)
+	}
+	chartHTML := renderChartContent(chart_data)
+	// line_chart := charts.NewLine()
+	// line_chart.SetXAxis(chart_data.XAxis).AddSeries("Weight", chart_data.LineData)
+	// line_chart.Render(w)
 
 	data := ProfileData{
-		User:     current_user,
-		Provider: current_user.Provider,
-		Title:    "Weigh In",
+		User:      current_user,
+		Provider:  current_user.Provider,
+		Title:     "Weigh In",
+		ChartHTML: template.HTML(chartHTML),
 	}
-	fmt.Printf("user from data - index tmpl: %v\n", data.User)
 
 	err = tmpl.ExecuteTemplate(w, "index", data)
 	if err != nil {
@@ -196,14 +193,10 @@ func (cfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request)
 
 func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
 
-	sess, _ := gothic.Store.Get(r, session_name)
-	if sess.IsNew == true {
-		fmt.Println(sess.Options.MaxAge)
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
+	current_user, err := cfg.getCurrentUser(w, r)
+	if err != nil {
+		http.Error(w, "Failed to get current user", http.StatusBadRequest)
 	}
-
-	// flash_message := sess.Flashes("weigh in successful")
 
 	// convert weight string to int64
 	weight, err := strconv.ParseInt(r.FormValue("weight"), 10, 64)
@@ -222,8 +215,8 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 		alcohol = true
 	}
 
-	fmt.Printf("note: %v\n", r.FormValue("note"))
-	fmt.Printf("note data type: %T\n", r.FormValue("note"))
+	// fmt.Printf("note: %v\n", r.FormValue("note"))
+	// fmt.Printf("note data type: %T\n", r.FormValue("note"))
 
 	// convert log date string to time.Time
 	time_layout := "2006-01-02"
@@ -239,14 +232,13 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 		Alcohol:     alcohol,
 		Note:        sql.NullString{String: r.FormValue("note"), Valid: true},
 		WeighInDiet: r.FormValue("weigh_in_diet"),
+		UserID:      current_user.ID,
 	})
 	if err != nil {
 		http.Error(w, "Failed to create new weigh in", http.StatusBadRequest)
 		return
 	}
-	fmt.Fprint(w, "WEIGH IN CREATED")
 	fmt.Printf("weigh in: %+v\n", weighInNew)
-	// tmpl.ExecuteTemplate(w, "success", flash_message[0])
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
@@ -265,4 +257,65 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
 		return
 	}
+}
+
+func (cfg *apiConfig) getCurrentUser(w http.ResponseWriter, r *http.Request) (database.User, error) {
+	sess, _ := gothic.Store.Get(r, session_name)
+	if sess.IsNew == true {
+		fmt.Println(sess.Options.MaxAge)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return database.User{}, nil
+	}
+	user_email := sess.Values["user_email"]
+
+	current_user, err := cfg.db.GetUserByEmail(r.Context(), user_email.(string))
+	if err != nil {
+		return database.User{}, err
+	}
+	return current_user, nil
+}
+
+type ChartData struct {
+	XAxis    []string
+	LineData []opts.LineData
+}
+
+func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) (ChartData, error) {
+
+	user, err := cfg.getCurrentUser(w, r)
+	if err != nil {
+		http.Error(w, "Failed to get current user", http.StatusBadRequest)
+	}
+	weighIn_data, err := cfg.db.GetWeightChartDataByUser(r.Context(), user.ID)
+	if err != nil {
+		http.Error(w, "Failed to get chart data", http.StatusInternalServerError)
+	}
+
+	chart_data := ChartData{}
+	for _, weighIn := range weighIn_data {
+		chart_data.XAxis = append(chart_data.XAxis, weighIn.LogDate.Format("01-02"))
+		chart_data.LineData = append(chart_data.LineData, opts.LineData{Value: weighIn.Weight})
+	}
+
+	return chart_data, nil
+}
+
+func renderChartContent(data ChartData) []byte {
+
+	chart := charts.NewLine()
+
+	chart.SetXAxis(data.XAxis).AddSeries("Weight", data.LineData).SetSeriesOptions(
+		charts.WithLabelOpts(opts.Label{
+			Show: opts.Bool(true),
+		}),
+		charts.WithAreaStyleOpts(opts.AreaStyle{
+			Opacity: opts.Float(0.2),
+		}),
+		charts.WithLineChartOpts(opts.LineChart{
+			Smooth: opts.Bool(true),
+		}),
+	)
+	chartHTML := chart.RenderContent()
+
+	return chartHTML
 }

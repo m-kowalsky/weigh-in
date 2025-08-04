@@ -10,7 +10,8 @@ note text,
 cheated boolean not null default false,
 alcohol boolean not null default false,
 weigh_in_diet text not null,
-foreign key(weigh_in_diet) references diets(diet_type)
+user_id integer not null,
+foreign key(user_id) references users(id) on delete cascade
 );
 
 -- +goose Down
