@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -136,7 +137,7 @@ func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	chart_data, err := cfg.getChartData(w, r)
 	if err != nil {
-		http.Error(w, "Failed to get chart data", http.StatusBadRequest)
+		log.Fatal("Failed to get chart data in index handler")
 	}
 	chartHTML := renderChartContent(chart_data)
 	// line_chart := charts.NewLine()
@@ -288,7 +289,7 @@ func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) (Char
 	}
 	weighIn_data, err := cfg.db.GetWeightChartDataByUser(r.Context(), user.ID)
 	if err != nil {
-		http.Error(w, "Failed to get chart data", http.StatusInternalServerError)
+		log.Fatal("Failed to get weighIn data in getChartData()")
 	}
 
 	chart_data := ChartData{}
