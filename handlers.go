@@ -129,26 +129,27 @@ func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
 
-	type ProfileData struct {
-		User      database.User
-		Provider  string
-		Title     string
-		ChartHTML template.HTML
+	type PageData struct {
+		User        database.User
+		Provider    string
+		Title       string
+		ChartHTML   template.HTML
+		CurrentDate string
 	}
 	chart_data, err := cfg.getChartData(w, r)
 	if err != nil {
 		log.Fatal("Failed to get chart data in index handler")
 	}
 	chartHTML := renderChartContent(chart_data)
-	// line_chart := charts.NewLine()
-	// line_chart.SetXAxis(chart_data.XAxis).AddSeries("Weight", chart_data.LineData)
-	// line_chart.Render(w)
 
-	data := ProfileData{
-		User:      current_user,
-		Provider:  current_user.Provider,
-		Title:     "Weigh In",
-		ChartHTML: template.HTML(chartHTML),
+	current_date := time.Now().Format("2006-01-02")
+
+	data := PageData{
+		User:        current_user,
+		Provider:    current_user.Provider,
+		Title:       "Weigh In",
+		ChartHTML:   template.HTML(chartHTML),
+		CurrentDate: current_date,
 	}
 
 	err = tmpl.ExecuteTemplate(w, "index", data)
