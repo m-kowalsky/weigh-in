@@ -1,6 +1,6 @@
 -- +goose Up
 Alter table users
-add column provider text not null;
+Add column provider text not null default "google";
 
 -- +goose Down
 Alter table users
