@@ -11,25 +11,21 @@
 		<p class="text-lg text-red-500 p-4">Please fill out all required fields</p>
 	</div>
 	<div id="success"></div>
-	<div id=" main_body" class="min-h-screen flex flex-col items-stretch">
+	<div id="main_body" class="min-h-screen flex flex-col items-stretch">
 		<!-- Responsive wrapper -->
 		<div class="flex flex-col md:flex-row w-full">
 			<!-- Graph section -->
-			<div class="hidden md:block w-full lg:w-1/2 p-4 flex flex-col items-center justify-center">
-				<h4>Graph goes here</h4>
-				<p class="text-sm text-gray-700 mt-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-					eiusmod tempor incididunt ut labore
-					et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-					aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-					cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-					culpa qui officia deserunt mollit anim id est laborum.</p>
+			<div class="w-full lg:w-1/2 p-4 flex flex-col items-center justify-center">
+				{{ .ChartHTML }}
 			</div>
+
 			<!-- Weigh-in form -->
 			<div id="new_weigh_in" class="w-full lg:w-1/2 p-4 flex flex-col items-center justify-center">
 				{{ template "weigh_in_form" }}
 			</div>
 		</div>
 	</div>
+	{{ template "data_button" }}
 
 </body>
 

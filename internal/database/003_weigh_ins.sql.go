@@ -12,9 +12,9 @@ import (
 )
 
 const createWeighIn = `-- name: CreateWeighIn :one
-Insert into weigh_ins (created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet)
-Values ( ?, ?, ?, ?, ?, ?, ?, ?, ?)
-Returning id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet
+Insert into weigh_ins (created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id)
+Values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Returning id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id
 `
 
 type CreateWeighInParams struct {
@@ -27,6 +27,7 @@ type CreateWeighInParams struct {
 	Cheated     bool
 	Alcohol     bool
 	WeighInDiet string
+	UserID      int64
 }
 
 func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (WeighIn, error) {
@@ -40,6 +41,7 @@ func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (W
 		arg.Cheated,
 		arg.Alcohol,
 		arg.WeighInDiet,
+		arg.UserID,
 	)
 	var i WeighIn
 	err := row.Scan(
@@ -53,6 +55,41 @@ func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (W
 		&i.Cheated,
 		&i.Alcohol,
 		&i.WeighInDiet,
+		&i.UserID,
 	)
 	return i, err
+}
+
+const getWeightChartDataByUser = `-- name: GetWeightChartDataByUser :many
+Select log_date, weight from weigh_ins
+where user_id = ?
+order by log_date
+`
+
+type GetWeightChartDataByUserRow struct {
+	LogDate time.Time
+	Weight  int64
+}
+
+func (q *Queries) GetWeightChartDataByUser(ctx context.Context, userID int64) ([]GetWeightChartDataByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getWeightChartDataByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetWeightChartDataByUserRow
+	for rows.Next() {
+		var i GetWeightChartDataByUserRow
+		if err := rows.Scan(&i.LogDate, &i.Weight); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
