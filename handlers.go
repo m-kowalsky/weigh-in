@@ -18,7 +18,16 @@ import (
 )
 
 const sess_email = "user_email"
+
 const sess_userId = "user_id"
+
+type PageData struct {
+	User        database.User
+	Provider    string
+	Title       string
+	ChartHTML   template.HTML
+	CurrentDate string
+}
 
 func (cfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
 
@@ -129,18 +138,10 @@ func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
 
-	type PageData struct {
-		User        database.User
-		Provider    string
-		Title       string
-		ChartHTML   template.HTML
-		CurrentDate string
-	}
 	chart_data, err := cfg.getChartData(w, r)
 	if err != nil {
 		log.Fatal("Failed to get chart data in index handler")
 	}
-	chartHTML := renderChartContent(chart_data)
 
 	current_date := time.Now().Format("2006-01-02")
 
@@ -148,7 +149,7 @@ func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 		User:        current_user,
 		Provider:    current_user.Provider,
 		Title:       "Weigh In",
-		ChartHTML:   template.HTML(chartHTML),
+		ChartHTML:   template.HTML(chart_data),
 		CurrentDate: current_date,
 	}
 
@@ -238,19 +239,38 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	fmt.Printf("weigh in: %+v\n", weighInNew)
+
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
-	type PageData struct {
+	type LoginData struct {
 		ProviderIndex *ProviderIndex
 		Title         string
 	}
 
-	data := PageData{
+	data := LoginData{
 		ProviderIndex: cfg.providerIndex,
 		Title:         "Weigh In - Login",
 	}
 	err := tmpl.ExecuteTemplate(w, "login", data)
+	if err != nil {
+		fmt.Printf("Template error: %v", err)
+		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (cfg *apiConfig) handlerRefreshChart(w http.ResponseWriter, r *http.Request) {
+
+	chart_html, err := cfg.getChartData(w, r)
+	if err != nil {
+		log.Fatal("Failed to get chart data in refresh chart handler")
+	}
+	data := PageData{
+		ChartHTML: template.HTML(chart_html),
+	}
+
+	err = tmpl.ExecuteTemplate(w, "line_chart", data)
 	if err != nil {
 		fmt.Printf("Template error: %v", err)
 		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
@@ -279,7 +299,7 @@ type ChartData struct {
 	LineData []opts.LineData
 }
 
-func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) (ChartData, error) {
+func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 
 	user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
@@ -295,8 +315,9 @@ func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) (Char
 		chart_data.XAxis = append(chart_data.XAxis, weighIn.LogDate.Format("01-02"))
 		chart_data.LineData = append(chart_data.LineData, opts.LineData{Value: weighIn.Weight})
 	}
+	chart_html := renderChartContent(chart_data)
 
-	return chart_data, nil
+	return chart_html, nil
 }
 
 func renderChartContent(data ChartData) []byte {
