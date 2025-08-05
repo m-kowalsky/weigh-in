@@ -15,10 +15,7 @@
 		<!-- Responsive wrapper -->
 		<div class="flex flex-col md:flex-row w-full">
 			<!-- Graph section -->
-			<div class="w-full lg:w-1/2 p-4 flex flex-col items-center justify-center">
-				{{ .ChartHTML }}
-			</div>
-
+			{{ template "line_chart" . }}
 			<!-- Weigh-in form -->
 			<div id="new_weigh_in" class="w-full lg:w-1/2 p-4 flex flex-col items-center justify-center">
 				{{ template "weigh_in_form" . }}
@@ -28,4 +25,11 @@
 </body>
 
 </html>
+{{ end }}
+
+{{ block "line_chart" . }}
+<div class="w-full lg:w-1/2 p-4 flex flex-col items-center justify-center" hx-get="/get_chart_data"
+	hx-trigger="submit_weigh_in from:body delay:500ms" hx-swap="outerHTML">
+	{{ .ChartHTML }}
+</div>
 {{ end }}

@@ -113,6 +113,7 @@ func main() {
 	r.Get("/weigh_in/new", cfg.handlerWeighInNew)
 	r.Get("/landing_page", cfg.handlerLandingPage)
 	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
+	r.Get("/get_chart_data", cfg.handlerRefreshChart)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
