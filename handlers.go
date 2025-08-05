@@ -217,9 +217,6 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 		alcohol = true
 	}
 
-	// fmt.Printf("note: %v\n", r.FormValue("note"))
-	// fmt.Printf("note data type: %T\n", r.FormValue("note"))
-
 	// convert log date string to time.Time
 	time_layout := "2006-01-02"
 	log_date, err := time.Parse(time_layout, r.FormValue("log_date"))

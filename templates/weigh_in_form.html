@@ -2,9 +2,9 @@
 <!-- Weigh-In Card -->
 <div
 	class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-lg bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-6">
-	<h2 id="weigh_in_text" class="text-2xl font-bold text-gray-800 text-center dark:text-white">Weigh-In Entry</h2>
+	<h2 class="text-2xl font-bold text-gray-800 text-center dark:text-white">Weigh-In Entry</h2>
 
-	<form class="space-y-3" hx-post="/weigh_in/create" hx-swap="outerHTML" hx-target="#weigh_in_text"
+	<form class="space-y-3" hx-post="/weigh_in/create" hx-target="#main_body"
 		hx-on::after-request="if(event.detail.successful) this.reset()">
 		<!-- Weight -->
 		<div>
