@@ -13,3 +13,8 @@ Select count(*) from users where email = ?;
 -- name: GetUserById :one
 Select * from users
 Where id = ?;
+
+-- name: UpdateUser :exec
+Update users
+Set starting_weight = ?, weight_unit = ?, username = ?
+Where id = ?;

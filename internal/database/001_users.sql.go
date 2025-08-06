@@ -25,7 +25,7 @@ func (q *Queries) CheckIfUserExistsByEmail(ctx context.Context, email string) (i
 const createUser = `-- name: CreateUser :one
 Insert into users (created_at, updated_at, email, access_token, full_name, provider)
 Values ( ?, ?, ?, ?, ?, ?)
-Returning id, created_at, updated_at, email, access_token, full_name, provider
+Returning id, created_at, updated_at, email, access_token, full_name, provider, weight_unit, username, starting_weight
 `
 
 type CreateUserParams struct {
@@ -55,12 +55,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.AccessToken,
 		&i.FullName,
 		&i.Provider,
+		&i.WeightUnit,
+		&i.Username,
+		&i.StartingWeight,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-Select id, created_at, updated_at, email, access_token, full_name, provider From users
+Select id, created_at, updated_at, email, access_token, full_name, provider, weight_unit, username, starting_weight From users
 Where email = ?
 `
 
@@ -75,12 +78,15 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.AccessToken,
 		&i.FullName,
 		&i.Provider,
+		&i.WeightUnit,
+		&i.Username,
+		&i.StartingWeight,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-Select id, created_at, updated_at, email, access_token, full_name, provider from users
+Select id, created_at, updated_at, email, access_token, full_name, provider, weight_unit, username, starting_weight from users
 Where id = ?
 `
 
@@ -95,6 +101,32 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (User, error) {
 		&i.AccessToken,
 		&i.FullName,
 		&i.Provider,
+		&i.WeightUnit,
+		&i.Username,
+		&i.StartingWeight,
 	)
 	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :exec
+Update users
+Set starting_weight = ?, weight_unit = ?, username = ?
+Where id = ?
+`
+
+type UpdateUserParams struct {
+	StartingWeight sql.NullInt64
+	WeightUnit     interface{}
+	Username       sql.NullString
+	ID             int64
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
+	_, err := q.db.ExecContext(ctx, updateUser,
+		arg.StartingWeight,
+		arg.WeightUnit,
+		arg.Username,
+		arg.ID,
+	)
+	return err
 }

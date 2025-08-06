@@ -12,16 +12,20 @@ import (
 type Diet struct {
 	ID       int64
 	DietType string
+	UserID   int64
 }
 
 type User struct {
-	ID          int64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Email       string
-	AccessToken string
-	FullName    sql.NullString
-	Provider    interface{}
+	ID             int64
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Email          string
+	AccessToken    string
+	FullName       sql.NullString
+	Provider       interface{}
+	WeightUnit     interface{}
+	Username       sql.NullString
+	StartingWeight sql.NullInt64
 }
 
 type WeighIn struct {
