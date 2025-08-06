@@ -10,14 +10,19 @@ import (
 )
 
 const createDiet = `-- name: CreateDiet :one
-Insert into diets ( diet_type )
-Values ( ? )
-Returning id, diet_type
+Insert into diets ( diet_type, user_id )
+Values ( ?, ? )
+Returning id, diet_type, user_id
 `
 
-func (q *Queries) CreateDiet(ctx context.Context, dietType string) (Diet, error) {
-	row := q.db.QueryRowContext(ctx, createDiet, dietType)
+type CreateDietParams struct {
+	DietType string
+	UserID   int64
+}
+
+func (q *Queries) CreateDiet(ctx context.Context, arg CreateDietParams) (Diet, error) {
+	row := q.db.QueryRowContext(ctx, createDiet, arg.DietType, arg.UserID)
 	var i Diet
-	err := row.Scan(&i.ID, &i.DietType)
+	err := row.Scan(&i.ID, &i.DietType, &i.UserID)
 	return i, err
 }

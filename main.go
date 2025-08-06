@@ -46,9 +46,9 @@ const session_name = "user-session"
 
 const tmpl_path = "templates/*.html"
 
-type apiConfig struct {
-	db            *database.Queries
-	providerIndex *ProviderIndex
+type ApiConfig struct {
+	Db            *database.Queries
+	ProviderIndex *ProviderIndex
 }
 
 func main() {
@@ -96,9 +96,9 @@ func main() {
 	// Connect db created above to queries for sqlc
 	db_queries := database.New(Db)
 
-	cfg := apiConfig{
-		db:            db_queries,
-		providerIndex: providerIndex,
+	cfg := ApiConfig{
+		Db:            db_queries,
+		ProviderIndex: providerIndex,
 	}
 
 	// Routes
@@ -114,6 +114,8 @@ func main() {
 	r.Get("/landing_page", cfg.handlerLandingPage)
 	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
 	r.Get("/get_chart_data", cfg.handlerRefreshChart)
+	r.Get("/onboard-user", cfg.handlerOnboard)
+	r.Post("/update-user/{user_id}", cfg.handlerUpdateUserFromOnboard)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))

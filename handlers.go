@@ -29,12 +29,13 @@ type PageData struct {
 	CurrentDate string
 }
 
-func (cfg *apiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
+func (cfg *ApiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Request) {
+	is_new_user := false
 
 	// Cookie debug
 	// for _, cookie := range r.Cookies() {
@@ -58,13 +59,13 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 	// }
 
 	// Check if user exists in db already by getting a count of a user by email
-	count, err := cfg.db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
+	count, err := cfg.Db.CheckIfUserExistsByEmail(r.Context(), goth_user.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if count == 1 {
-		current_user, err := cfg.db.GetUserByEmail(r.Context(), goth_user.Email)
+		current_user, err := cfg.Db.GetUserByEmail(r.Context(), goth_user.Email)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -72,7 +73,7 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 
 		fmt.Printf("current user: %v", current_user)
 	} else {
-		new_user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		new_user, err := cfg.Db.CreateUser(r.Context(), database.CreateUserParams{
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 			Email:       goth_user.Email,
@@ -83,6 +84,7 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 		if err != nil {
 			http.Error(w, "problem creating new user", http.StatusBadRequest)
 		}
+		is_new_user = true
 
 		fmt.Printf("current user: %v", new_user)
 	}
@@ -97,10 +99,13 @@ func (cfg *apiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 	sess.Values[sess_userId] = goth_user.UserID
 	sess.Save(r, w)
 
+	if is_new_user {
+		http.Redirect(w, r, "/onboard-user", http.StatusTemporaryRedirect)
+	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func (cfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
 
 	// Cookie debug
 	// for _, cookie := range r.Cookies() {
@@ -115,7 +120,7 @@ func (cfg *apiConfig) handlerGetAuth(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 
 	// Logout a user by setting the current user_session max age to -1 which will cause the client to delete the cookie associated with the session
 	session, err := gothic.Store.Get(r, session_name)
@@ -131,14 +136,14 @@ func (cfg *apiConfig) handlerLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
-func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	current_user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
 
-	chart_data, err := cfg.getChartData(w, r)
+	chart_data, err := cfg.GetChartData(w, r)
 	if err != nil {
 		log.Fatal("Failed to get chart data in index handler")
 	}
@@ -161,7 +166,7 @@ func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	user_id := chi.URLParam(r, "user_id")
 
 	id_int, err := strconv.ParseInt(user_id, 16, 64)
@@ -169,7 +174,7 @@ func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Faile to convert user_id urlParam to int", http.StatusBadRequest)
 	}
 
-	current_user, err := cfg.db.GetUserById(r.Context(), id_int)
+	current_user, err := cfg.Db.GetUserById(r.Context(), id_int)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -184,17 +189,17 @@ func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cfg *apiConfig) handlerWeighInNew(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerWeighInNew(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
 
 }
 
-func (cfg *apiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "landing_page", nil)
 
 }
 
-func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Request) {
 
 	current_user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
@@ -222,7 +227,7 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 	time_layout := "2006-01-02"
 	log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
 
-	weighInNew, err := cfg.db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
+	weighInNew, err := cfg.Db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		Weight:      weight,
@@ -242,14 +247,14 @@ func (cfg *apiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 
 }
 
-func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type LoginData struct {
 		ProviderIndex *ProviderIndex
 		Title         string
 	}
 
 	data := LoginData{
-		ProviderIndex: cfg.providerIndex,
+		ProviderIndex: cfg.ProviderIndex,
 		Title:         "Weigh In - Login",
 	}
 	err := tmpl.ExecuteTemplate(w, "login", data)
@@ -260,9 +265,9 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cfg *apiConfig) handlerRefreshChart(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerRefreshChart(w http.ResponseWriter, r *http.Request) {
 
-	chart_html, err := cfg.getChartData(w, r)
+	chart_html, err := cfg.GetChartData(w, r)
 	if err != nil {
 		log.Fatal("Failed to get chart data in refresh chart handler")
 	}
@@ -278,7 +283,7 @@ func (cfg *apiConfig) handlerRefreshChart(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (cfg *apiConfig) getCurrentUser(w http.ResponseWriter, r *http.Request) (database.User, error) {
+func (cfg *ApiConfig) getCurrentUser(w http.ResponseWriter, r *http.Request) (database.User, error) {
 	sess, _ := gothic.Store.Get(r, session_name)
 	if sess.IsNew == true {
 		fmt.Println(sess.Options.MaxAge)
@@ -287,7 +292,7 @@ func (cfg *apiConfig) getCurrentUser(w http.ResponseWriter, r *http.Request) (da
 	}
 	user_email := sess.Values["user_email"]
 
-	current_user, err := cfg.db.GetUserByEmail(r.Context(), user_email.(string))
+	current_user, err := cfg.Db.GetUserByEmail(r.Context(), user_email.(string))
 	if err != nil {
 		return database.User{}, err
 	}
@@ -299,7 +304,7 @@ type ChartData struct {
 	LineData []opts.LineData
 }
 
-func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+func (cfg *ApiConfig) GetChartData(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 
 	user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
@@ -311,7 +316,7 @@ func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) ([]by
 
 	date_range_min := current_date.AddDate(0, 0, -30)
 
-	weighIn_data, err := cfg.db.GetWeightChartDataByUser(r.Context(), database.GetWeightChartDataByUserParams{
+	weighIn_data, err := cfg.Db.GetWeightChartDataByUser(r.Context(), database.GetWeightChartDataByUserParams{
 		UserID:  user.ID,
 		LogDate: date_range_min,
 	})
@@ -349,4 +354,53 @@ func renderChartContent(data ChartData) []byte {
 	chartHTML := chart.RenderContent()
 
 	return chartHTML
+}
+
+func (cfg *ApiConfig) handlerOnboard(w http.ResponseWriter, r *http.Request) {
+
+	user, err := cfg.getCurrentUser(w, r)
+	if err != nil {
+		http.Error(w, "Failed to get user during onboard", http.StatusBadRequest)
+	}
+
+	data := PageData{
+		User:  user,
+		Title: "Weigh In - Onboard",
+	}
+	tmpl.ExecuteTemplate(w, "onboard", data)
+}
+
+func (cfg *ApiConfig) handlerUpdateUserFromOnboard(w http.ResponseWriter, r *http.Request) {
+
+	user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Failed to parse user_id from urlparam", http.StatusBadRequest)
+	}
+
+	starting_weight, err := strconv.ParseInt(r.FormValue("starting_weight"), 10, 64)
+	if err != nil {
+		log.Fatal("Failed to parse starting weight string to int64")
+	}
+	weight_unit := r.FormValue("preferred_weight_unit")
+	username := r.FormValue("username")
+	diet := r.FormValue("diet")
+
+	err = cfg.Db.UpdateUser(r.Context(), database.UpdateUserParams{
+		StartingWeight: sql.NullInt64{Int64: starting_weight, Valid: true},
+		WeightUnit:     weight_unit,
+		Username:       sql.NullString{String: username, Valid: true},
+		ID:             user_id,
+	})
+	if err != nil {
+		http.Error(w, "Failed to update user", http.StatusBadRequest)
+	}
+	_, err = cfg.Db.CreateDiet(r.Context(), database.CreateDietParams{
+		DietType: diet,
+		UserID:   user_id,
+	})
+	if err != nil {
+		http.Error(w, "Failed to create diet", http.StatusBadRequest)
+	}
+
+	w.Header().Set("HX-Redirect", "/")
 }

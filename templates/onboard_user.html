@@ -1,0 +1,74 @@
+{{ block "onboard" . }}
+
+{{ template "header" . }}
+
+<body>
+	{{ template "navbar" . }}
+	<div id="main_body" class="min-h-screen flex flex-col items-center px-4">
+		<h3 class="text-2xl font-semibold text-center text-gray-800 mb-2">Welcome to Weigh In!</h3>
+		<p class="text-gray-600 text-center mb-6">Please take a minute to answer a few questions. After submitting, you
+			can make any changes needed on the Account page.</p>
+
+		<!-- Responsive wrapper for the form -->
+		<div class="w-full flex justify-center">
+			{{ template "start_form" . }}
+		</div>
+	</div>
+</body>
+
+</html>
+{{ end }}
+
+{{ block "start_form" . }}
+<!-- Starting Info Card -->
+<div
+	class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-lg bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-6">
+	<h2 class="text-2xl font-bold text-gray-800 text-center dark:text-white">Starting Info</h2>
+
+	<form class="space-y-3" hx-post="/update-user/{{ .User.ID }}" hx-swap="none"
+		hx-on::after-request="if(event.detail.successful) this.reset()">
+
+		<!-- Starting Weight -->
+		<div>
+			<label for="starting_weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Starting
+				Weight*</label>
+			<input type="number" name="starting_weight" id="starting_weight" required
+				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2" />
+		</div>
+
+		<!-- Preferred Weight Unit -->
+		<div>
+			<label for="preferred_weight_unit"
+				class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preferred Weight Unit*</label>
+			<select name="preferred_weight_unit" id="preferred_weight_unit" required
+				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2">
+				<option value="lbs" selected>lbs</option>
+				<option value="kg">kg</option>
+			</select>
+		</div>
+
+		<!-- Username -->
+		<div>
+			<label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username*</label>
+			<input type="text" name="username" id="username" required
+				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2" />
+		</div>
+		<!-- Diet -->
+		<div>
+			<label for="diet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Diet*</label>
+			<input type="text" name="diet" id="diet" required
+				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2" />
+		</div>
+
+
+		<!-- Submit Button -->
+		<div>
+			<button type="submit"
+				class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl bg-blue-500 hover:bg-blue-700">
+				Submit
+			</button>
+		</div>
+	</form>
+	<p class="text-gray-500 text-left">*required</p>
+</div>
+{{ end }}
