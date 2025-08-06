@@ -147,7 +147,7 @@ func (cfg *apiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData{
 		User:        current_user,
-		Provider:    current_user.Provider,
+		Provider:    current_user.Provider.(string),
 		Title:       "Weigh In",
 		ChartHTML:   template.HTML(chart_data),
 		CurrentDate: current_date,
@@ -305,7 +305,17 @@ func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) ([]by
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
-	weighIn_data, err := cfg.db.GetWeightChartDataByUser(r.Context(), user.ID)
+
+	// Get current date and subtract 30 days to get date range for chart
+	current_date := time.Now()
+
+	date_range_min := current_date.AddDate(0, 0, -30)
+
+	weighIn_data, err := cfg.db.GetWeightChartDataByUser(r.Context(), database.GetWeightChartDataByUserParams{
+		UserID:  user.ID,
+		LogDate: date_range_min,
+	})
+
 	if err != nil {
 		log.Fatal("Failed to get weighIn data in getChartData()")
 	}
@@ -323,6 +333,7 @@ func (cfg *apiConfig) getChartData(w http.ResponseWriter, r *http.Request) ([]by
 func renderChartContent(data ChartData) []byte {
 
 	chart := charts.NewLine()
+	chart.SetGlobalOptions(charts.WithTitleOpts(opts.Title{Title: "Weigh Ins", Subtitle: "Last 30 days"}))
 
 	chart.SetXAxis(data.XAxis).AddSeries("Weight", data.LineData).SetSeriesOptions(
 		charts.WithLabelOpts(opts.Label{

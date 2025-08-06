@@ -5,5 +5,5 @@ Returning *;
 
 -- name: GetWeightChartDataByUser :many
 Select log_date, weight from weigh_ins
-where user_id = ?
+where user_id = ? and log_date >= ?
 order by log_date;

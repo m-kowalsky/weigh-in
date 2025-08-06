@@ -21,7 +21,7 @@ type User struct {
 	Email       string
 	AccessToken string
 	FullName    sql.NullString
-	Provider    string
+	Provider    interface{}
 }
 
 type WeighIn struct {

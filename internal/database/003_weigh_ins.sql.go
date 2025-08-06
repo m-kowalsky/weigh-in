@@ -62,17 +62,22 @@ func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (W
 
 const getWeightChartDataByUser = `-- name: GetWeightChartDataByUser :many
 Select log_date, weight from weigh_ins
-where user_id = ?
+where user_id = ? and log_date >= ?
 order by log_date
 `
+
+type GetWeightChartDataByUserParams struct {
+	UserID  int64
+	LogDate time.Time
+}
 
 type GetWeightChartDataByUserRow struct {
 	LogDate time.Time
 	Weight  int64
 }
 
-func (q *Queries) GetWeightChartDataByUser(ctx context.Context, userID int64) ([]GetWeightChartDataByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getWeightChartDataByUser, userID)
+func (q *Queries) GetWeightChartDataByUser(ctx context.Context, arg GetWeightChartDataByUserParams) ([]GetWeightChartDataByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getWeightChartDataByUser, arg.UserID, arg.LogDate)
 	if err != nil {
 		return nil, err
 	}
