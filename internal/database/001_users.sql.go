@@ -34,7 +34,7 @@ type CreateUserParams struct {
 	Email       string
 	AccessToken string
 	FullName    sql.NullString
-	Provider    interface{}
+	Provider    sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {

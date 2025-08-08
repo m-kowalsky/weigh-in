@@ -1,0 +1,42 @@
+{{ block "weigh_ins_display" . }}
+{{ range .WeighIns }}
+<!-- Weigh-In Display Card -->
+<div
+	class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-lg mx-auto bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-4 mb-4">
+	<!-- Date -->
+	<h2 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">
+		{{ .LogDate }}
+	</h2>
+
+	<!-- Weight -->
+	<p class="text-lg sm:text-xl text-gray-700 dark:text-gray-300 text-center font-medium">
+		{{ .Weight }} {{ .WeightUnit }}
+	</p>
+
+	<!-- Note -->
+	<p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 text-center italic">
+		{{ if .Note.Valid }} Note: {{ .Note.String }} {{ else }} No Note {{ end }}
+	</p>
+
+	<!-- Other Fields -->
+	<div class="grid grid-cols-2 gap-4 text-sm sm:text-base text-gray-700 dark:text-gray-300">
+		<div><span class="font-semibold">Cheated:</span> {{if .Cheated }} Yes {{ else }} No {{ end }} </div>
+		<div><span class="font-semibold">Alcohol:</span> {{if .Alcohol }} Yes {{ else }} No {{ end }}
+		</div>
+		<div class="col-span-2"><span class="font-semibold">Diet:</span> {{ .WeighInDiet }}</div>
+	</div>
+
+	<!-- Action Links -->
+	<div class="flex justify-center gap-6 text-sm sm:text-base">
+		<a href="/edit/weigh-in/{{ .ID }}"
+			class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-semibold">
+			Edit
+		</a>
+		<a href="/delete/weigh-in/{{ .ID }}"
+			class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-semibold">
+			Delete
+		</a>
+	</div>
+</div>
+{{ end }}
+{{ end }}

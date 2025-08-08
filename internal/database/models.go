@@ -22,7 +22,7 @@ type User struct {
 	Email          string
 	AccessToken    string
 	FullName       sql.NullString
-	Provider       interface{}
+	Provider       sql.NullString
 	WeightUnit     interface{}
 	Username       sql.NullString
 	StartingWeight sql.NullInt64
