@@ -27,6 +27,7 @@ type PageData struct {
 	Title       string
 	ChartHTML   template.HTML
 	CurrentDate string
+	WeighIns    []database.WeighIn
 }
 
 func (cfg *ApiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
@@ -79,7 +80,7 @@ func (cfg *ApiConfig) handlerGetAuthCallback(w http.ResponseWriter, r *http.Requ
 			Email:       goth_user.Email,
 			AccessToken: goth_user.AccessToken,
 			FullName:    sql.NullString{String: goth_user.Name, Valid: true},
-			Provider:    provider,
+			Provider:    sql.NullString{String: provider, Valid: true},
 		})
 		if err != nil {
 			http.Error(w, "problem creating new user", http.StatusBadRequest)
@@ -141,6 +142,7 @@ func (cfg *ApiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	current_user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	}
 
 	chart_data, err := cfg.GetChartData(w, r)
@@ -152,7 +154,7 @@ func (cfg *ApiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData{
 		User:        current_user,
-		Provider:    current_user.Provider.(string),
+		Provider:    current_user.Provider.String,
 		Title:       "Weigh In",
 		ChartHTML:   template.HTML(chart_data),
 		CurrentDate: current_date,
@@ -189,9 +191,30 @@ func (cfg *ApiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cfg *ApiConfig) handlerWeighInNew(w http.ResponseWriter, r *http.Request) {
-	tmpl.ExecuteTemplate(w, "weigh_in_form", nil)
+func (cfg *ApiConfig) handlerGetWeighIns(w http.ResponseWriter, r *http.Request) {
+	current_user, err := cfg.getCurrentUser(w, r)
+	if err != nil {
+		log.Fatal("Failed to get user handlerGetWeighIns")
+	}
+	weigh_ins, err := cfg.Db.GetWeighInsByUser(r.Context(), current_user.ID)
+	if err != nil {
+		log.Fatal("Failed to get users weigh ins")
+	}
+	data := PageData{
+		Title:    "All Weigh Ins",
+		WeighIns: weigh_ins,
+		User:     current_user,
+	}
 
+	for _, weighIn := range weigh_ins {
+		fmt.Printf("weighIn: %+v\n", weighIn)
+	}
+	err = tmpl.ExecuteTemplate(w, "weigh_ins_display", data)
+	if err != nil {
+		fmt.Printf("Template error: %v", err)
+		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cfg *ApiConfig) handlerLandingPage(w http.ResponseWriter, r *http.Request) {

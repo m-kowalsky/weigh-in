@@ -60,6 +60,46 @@ func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (W
 	return i, err
 }
 
+const getWeighInsByUser = `-- name: GetWeighInsByUser :many
+Select id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id from weigh_ins
+where user_id = ?
+`
+
+func (q *Queries) GetWeighInsByUser(ctx context.Context, userID int64) ([]WeighIn, error) {
+	rows, err := q.db.QueryContext(ctx, getWeighInsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WeighIn
+	for rows.Next() {
+		var i WeighIn
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Weight,
+			&i.WeightUnit,
+			&i.LogDate,
+			&i.Note,
+			&i.Cheated,
+			&i.Alcohol,
+			&i.WeighInDiet,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getWeightChartDataByUser = `-- name: GetWeightChartDataByUser :many
 Select log_date, weight from weigh_ins
 where user_id = ? and log_date >= ?
