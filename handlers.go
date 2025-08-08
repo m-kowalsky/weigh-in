@@ -386,6 +386,10 @@ func (cfg *ApiConfig) handlerOnboard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get user during onboard", http.StatusBadRequest)
 	}
 
+	if user.StartingWeight.Valid {
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	}
+
 	data := PageData{
 		User:  user,
 		Title: "Weigh In - Onboard",
