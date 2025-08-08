@@ -12,22 +12,23 @@ import (
 )
 
 const createWeighIn = `-- name: CreateWeighIn :one
-Insert into weigh_ins (created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id)
-Values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-Returning id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id
+Insert into weigh_ins (created_at, updated_at, weight, weight_unit, log_date, log_date_display, note, cheated, alcohol, weigh_in_diet, user_id)
+Values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+Returning id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id, log_date_display
 `
 
 type CreateWeighInParams struct {
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Weight      int64
-	WeightUnit  string
-	LogDate     time.Time
-	Note        sql.NullString
-	Cheated     bool
-	Alcohol     bool
-	WeighInDiet string
-	UserID      int64
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Weight         int64
+	WeightUnit     string
+	LogDate        time.Time
+	LogDateDisplay string
+	Note           sql.NullString
+	Cheated        bool
+	Alcohol        bool
+	WeighInDiet    string
+	UserID         int64
 }
 
 func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (WeighIn, error) {
@@ -37,6 +38,7 @@ func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (W
 		arg.Weight,
 		arg.WeightUnit,
 		arg.LogDate,
+		arg.LogDateDisplay,
 		arg.Note,
 		arg.Cheated,
 		arg.Alcohol,
@@ -56,13 +58,40 @@ func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (W
 		&i.Alcohol,
 		&i.WeighInDiet,
 		&i.UserID,
+		&i.LogDateDisplay,
+	)
+	return i, err
+}
+
+const getWeighInById = `-- name: GetWeighInById :one
+Select id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id, log_date_display from weigh_ins
+where id = ?
+`
+
+func (q *Queries) GetWeighInById(ctx context.Context, id int64) (WeighIn, error) {
+	row := q.db.QueryRowContext(ctx, getWeighInById, id)
+	var i WeighIn
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Weight,
+		&i.WeightUnit,
+		&i.LogDate,
+		&i.Note,
+		&i.Cheated,
+		&i.Alcohol,
+		&i.WeighInDiet,
+		&i.UserID,
+		&i.LogDateDisplay,
 	)
 	return i, err
 }
 
 const getWeighInsByUser = `-- name: GetWeighInsByUser :many
-Select id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id from weigh_ins
+Select id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id, log_date_display from weigh_ins
 where user_id = ?
+order by log_date asc
 `
 
 func (q *Queries) GetWeighInsByUser(ctx context.Context, userID int64) ([]WeighIn, error) {
@@ -86,6 +115,7 @@ func (q *Queries) GetWeighInsByUser(ctx context.Context, userID int64) ([]WeighI
 			&i.Alcohol,
 			&i.WeighInDiet,
 			&i.UserID,
+			&i.LogDateDisplay,
 		); err != nil {
 			return nil, err
 		}
@@ -137,4 +167,40 @@ func (q *Queries) GetWeightChartDataByUser(ctx context.Context, arg GetWeightCha
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateWeighIn = `-- name: UpdateWeighIn :exec
+Update weigh_ins
+Set updated_at = ?, weight = ?, weight_unit = ?, log_date = ?, log_date_display = ?, note = ?, cheated = ?, alcohol = ?,
+weigh_in_diet = ?
+Where id = ?
+`
+
+type UpdateWeighInParams struct {
+	UpdatedAt      time.Time
+	Weight         int64
+	WeightUnit     string
+	LogDate        time.Time
+	LogDateDisplay string
+	Note           sql.NullString
+	Cheated        bool
+	Alcohol        bool
+	WeighInDiet    string
+	ID             int64
+}
+
+func (q *Queries) UpdateWeighIn(ctx context.Context, arg UpdateWeighInParams) error {
+	_, err := q.db.ExecContext(ctx, updateWeighIn,
+		arg.UpdatedAt,
+		arg.Weight,
+		arg.WeightUnit,
+		arg.LogDate,
+		arg.LogDateDisplay,
+		arg.Note,
+		arg.Cheated,
+		arg.Alcohol,
+		arg.WeighInDiet,
+		arg.ID,
+	)
+	return err
 }

@@ -22,12 +22,14 @@ const sess_email = "user_email"
 const sess_userId = "user_id"
 
 type PageData struct {
-	User        database.User
-	Provider    string
-	Title       string
-	ChartHTML   template.HTML
-	CurrentDate string
-	WeighIns    []database.WeighIn
+	User             database.User
+	Provider         string
+	Title            string
+	ChartHTML        template.HTML
+	CurrentDate      string
+	WeighIns         []database.WeighIn
+	WeighIn          database.WeighIn
+	LogDateFormatted string
 }
 
 func (cfg *ApiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
@@ -192,23 +194,26 @@ func (cfg *ApiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *ApiConfig) handlerGetWeighIns(w http.ResponseWriter, r *http.Request) {
+
 	current_user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
 		log.Fatal("Failed to get user handlerGetWeighIns")
 	}
+
 	weigh_ins, err := cfg.Db.GetWeighInsByUser(r.Context(), current_user.ID)
 	if err != nil {
 		log.Fatal("Failed to get users weigh ins")
 	}
+	for _, weighIn := range weigh_ins {
+		fmt.Printf("weigh in logdate : %v\n", weighIn.LogDate)
+	}
+
 	data := PageData{
 		Title:    "All Weigh Ins",
 		WeighIns: weigh_ins,
 		User:     current_user,
 	}
 
-	for _, weighIn := range weigh_ins {
-		fmt.Printf("weighIn: %+v\n", weighIn)
-	}
 	err = tmpl.ExecuteTemplate(w, "weigh_ins_display", data)
 	if err != nil {
 		fmt.Printf("Template error: %v", err)
@@ -242,7 +247,7 @@ func (cfg *ApiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 	if r.FormValue("cheated") == "on" {
 		cheated = true
 	}
-	if r.FormValue("alcohol") == "on" {
+	if r.FormValue("used_alcohol") == "on" {
 		alcohol = true
 	}
 
@@ -250,17 +255,21 @@ func (cfg *ApiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 	time_layout := "2006-01-02"
 	log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
 
+	log_date_display := log_date.Format("Jan 2, 2006")
+	fmt.Printf("logdate display: %v\n", log_date_display)
+
 	weighInNew, err := cfg.Db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Weight:      weight,
-		WeightUnit:  r.FormValue("weight_unit"),
-		LogDate:     log_date,
-		Cheated:     cheated,
-		Alcohol:     alcohol,
-		Note:        sql.NullString{String: r.FormValue("note"), Valid: true},
-		WeighInDiet: r.FormValue("weigh_in_diet"),
-		UserID:      current_user.ID,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+		Weight:         weight,
+		WeightUnit:     r.FormValue("weight_unit"),
+		LogDate:        log_date,
+		LogDateDisplay: log_date_display,
+		Cheated:        cheated,
+		Alcohol:        alcohol,
+		Note:           sql.NullString{String: r.FormValue("note"), Valid: true},
+		WeighInDiet:    r.FormValue("weigh_in_diet"),
+		UserID:         current_user.ID,
 	})
 	if err != nil {
 		http.Error(w, "Failed to create new weigh in", http.StatusBadRequest)
@@ -430,4 +439,82 @@ func (cfg *ApiConfig) handlerUpdateUserFromOnboard(w http.ResponseWriter, r *htt
 	}
 
 	w.Header().Set("HX-Redirect", "/")
+}
+
+func (cfg *ApiConfig) handlerEditWeighIn(w http.ResponseWriter, r *http.Request) {
+
+	weighIn_id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		log.Fatal("Failed to parse weigh in id to int64")
+	}
+
+	weighIn, err := cfg.Db.GetWeighInById(r.Context(), weighIn_id)
+	if err != nil {
+		log.Fatal("Failed to get weighIn by id")
+	}
+
+	// Format log date for html datepicker
+	logDateFormatted := weighIn.LogDate.Format("2006-01-02")
+
+	data := PageData{
+		Title:            "Weigh In - Edit",
+		WeighIn:          weighIn,
+		LogDateFormatted: logDateFormatted,
+	}
+
+	err = tmpl.ExecuteTemplate(w, "edit_weigh_in_form", data)
+	if err != nil {
+		fmt.Printf("Template error: %v", err)
+		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (cfg *ApiConfig) handlerUpdateWeighIn(w http.ResponseWriter, r *http.Request) {
+
+	weighIn_id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		log.Fatal("Failed to parse weigh in id to int64 handlerUpdateWeighIn")
+	}
+
+	fmt.Printf("weighIn id: %v\n", weighIn_id)
+
+	weight, err := strconv.ParseInt(r.FormValue("weight"), 10, 64)
+	if err != nil {
+		http.Error(w, "Failed to parse weight to int64", http.StatusBadRequest)
+		return
+	}
+
+	// convert cheated and alcohol string to bool
+	cheated := false
+	alcohol := false
+	if r.FormValue("cheated") == "on" {
+		cheated = true
+	}
+	if r.FormValue("used_alcohol") == "on" {
+		alcohol = true
+	}
+
+	// convert log date string to time.Time
+	time_layout := "2006-01-02"
+	log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
+
+	log_date_display := log_date.Format("Jan 2, 2006")
+
+	err = cfg.Db.UpdateWeighIn(r.Context(), database.UpdateWeighInParams{
+		Weight:         weight,
+		WeightUnit:     r.FormValue("weight_unit"),
+		Cheated:        cheated,
+		Alcohol:        alcohol,
+		LogDate:        log_date,
+		LogDateDisplay: log_date_display,
+		UpdatedAt:      time.Now(),
+		Note:           sql.NullString{String: r.FormValue("note"), Valid: true},
+		WeighInDiet:    r.FormValue("weigh_in_diet"),
+		ID:             weighIn_id,
+	})
+	if err != nil {
+		log.Fatal("Failed to update weigh in")
+	}
+
 }
