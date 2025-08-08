@@ -29,15 +29,16 @@ type User struct {
 }
 
 type WeighIn struct {
-	ID          int64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Weight      int64
-	WeightUnit  string
-	LogDate     time.Time
-	Note        sql.NullString
-	Cheated     bool
-	Alcohol     bool
-	WeighInDiet string
-	UserID      int64
+	ID             int64
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Weight         int64
+	WeightUnit     string
+	LogDate        time.Time
+	Note           sql.NullString
+	Cheated        bool
+	Alcohol        bool
+	WeighInDiet    string
+	UserID         int64
+	LogDateDisplay string
 }

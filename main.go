@@ -116,6 +116,8 @@ func main() {
 	r.Get("/get_chart_data", cfg.handlerRefreshChart)
 	r.Get("/onboard-user", cfg.handlerOnboard)
 	r.Post("/update-user/{user_id}", cfg.handlerUpdateUserFromOnboard)
+	r.Get("/weigh-in/edit/{id}", cfg.handlerEditWeighIn)
+	r.Post("/weigh-in/update/{id}", cfg.handlerUpdateWeighIn)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
