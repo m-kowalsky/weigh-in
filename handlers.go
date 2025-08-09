@@ -15,6 +15,8 @@ import (
 	"github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/m-kowalsky/weigh-in/internal/database"
 	"github.com/markbates/goth/gothic"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const sess_email = "user_email"
@@ -431,6 +433,8 @@ func (cfg *ApiConfig) handlerUpdateUserFromOnboard(w http.ResponseWriter, r *htt
 	weight_unit := r.FormValue("preferred_weight_unit")
 	username := r.FormValue("username")
 	diet := r.FormValue("diet")
+	caser := cases.Title(language.English)
+	cap_diet := caser.String(diet)
 
 	err = cfg.Db.UpdateUser(r.Context(), database.UpdateUserParams{
 		StartingWeight: sql.NullInt64{Int64: starting_weight, Valid: true},
@@ -442,7 +446,7 @@ func (cfg *ApiConfig) handlerUpdateUserFromOnboard(w http.ResponseWriter, r *htt
 		http.Error(w, "Failed to update user", http.StatusBadRequest)
 	}
 	_, err = cfg.Db.CreateDiet(r.Context(), database.CreateDietParams{
-		DietType:  diet,
+		DietType:  cap_diet,
 		UserID:    user_id,
 		IsDefault: true,
 	})

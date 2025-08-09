@@ -9,6 +9,7 @@ require (
 	github.com/markbates/goth v1.81.0
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/pressly/goose/v3 v3.24.3
+	golang.org/x/text v0.25.0
 )
 
 require (
