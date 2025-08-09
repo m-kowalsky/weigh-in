@@ -10,19 +10,58 @@ import (
 )
 
 const createDiet = `-- name: CreateDiet :one
-Insert into diets ( diet_type, user_id )
-Values ( ?, ? )
-Returning id, diet_type, user_id
+Insert into diets ( diet_type, user_id, is_default )
+Values ( ?, ?, ? )
+Returning id, diet_type, user_id, is_default
 `
 
 type CreateDietParams struct {
-	DietType string
-	UserID   int64
+	DietType  string
+	UserID    int64
+	IsDefault bool
 }
 
 func (q *Queries) CreateDiet(ctx context.Context, arg CreateDietParams) (Diet, error) {
-	row := q.db.QueryRowContext(ctx, createDiet, arg.DietType, arg.UserID)
+	row := q.db.QueryRowContext(ctx, createDiet, arg.DietType, arg.UserID, arg.IsDefault)
 	var i Diet
-	err := row.Scan(&i.ID, &i.DietType, &i.UserID)
+	err := row.Scan(
+		&i.ID,
+		&i.DietType,
+		&i.UserID,
+		&i.IsDefault,
+	)
 	return i, err
+}
+
+const getDietsByUserId = `-- name: GetDietsByUserId :many
+Select id, diet_type, user_id, is_default from diets
+Where user_id = ?
+`
+
+func (q *Queries) GetDietsByUserId(ctx context.Context, userID int64) ([]Diet, error) {
+	rows, err := q.db.QueryContext(ctx, getDietsByUserId, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Diet
+	for rows.Next() {
+		var i Diet
+		if err := rows.Scan(
+			&i.ID,
+			&i.DietType,
+			&i.UserID,
+			&i.IsDefault,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

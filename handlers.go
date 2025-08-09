@@ -31,6 +31,7 @@ type PageData struct {
 	WeighIn          database.WeighIn
 	LogDateFormatted string
 	Message          string
+	UserDiets        []database.Diet
 }
 
 func (cfg *ApiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
@@ -153,14 +154,23 @@ func (cfg *ApiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("Failed to get chart data in index handler")
 	}
 
+	// Get current date for weigh in form datepicker default
 	current_date := time.Now().Format("2006-01-02")
 
+	// Get users diets for setting default diet on weigh in form and setting diet dropdown options
+	users_diets, err := cfg.Db.GetDietsByUserId(r.Context(), current_user.ID)
+	if err != nil {
+		log.Fatal("Failed to get users diets")
+	}
+
+	fmt.Printf("default diet: %v\n", users_diets[0])
 	data := PageData{
 		User:        current_user,
 		Provider:    current_user.Provider.String,
 		Title:       "Weigh In",
 		ChartHTML:   template.HTML(chart_data),
 		CurrentDate: current_date,
+		UserDiets:   users_diets,
 	}
 
 	err = tmpl.ExecuteTemplate(w, "index", data)
@@ -204,9 +214,6 @@ func (cfg *ApiConfig) handlerGetWeighIns(w http.ResponseWriter, r *http.Request)
 	weigh_ins, err := cfg.Db.GetWeighInsByUser(r.Context(), current_user.ID)
 	if err != nil {
 		log.Fatal("Failed to get users weigh ins")
-	}
-	for _, weighIn := range weigh_ins {
-		fmt.Printf("weigh in logdate : %v\n", weighIn.LogDate)
 	}
 
 	data := PageData{
@@ -435,8 +442,9 @@ func (cfg *ApiConfig) handlerUpdateUserFromOnboard(w http.ResponseWriter, r *htt
 		http.Error(w, "Failed to update user", http.StatusBadRequest)
 	}
 	_, err = cfg.Db.CreateDiet(r.Context(), database.CreateDietParams{
-		DietType: diet,
-		UserID:   user_id,
+		DietType:  diet,
+		UserID:    user_id,
+		IsDefault: true,
 	})
 	if err != nil {
 		http.Error(w, "Failed to create diet", http.StatusBadRequest)

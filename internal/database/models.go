@@ -10,9 +10,10 @@ import (
 )
 
 type Diet struct {
-	ID       int64
-	DietType string
-	UserID   int64
+	ID        int64
+	DietType  string
+	UserID    int64
+	IsDefault bool
 }
 
 type User struct {

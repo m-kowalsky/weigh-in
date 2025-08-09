@@ -16,11 +16,17 @@
 		<!-- Weight Unit -->
 		<div>
 			<label for="weight_unit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Weight
-				Unit*</label>
+				Unit</label>
 			<select name="weight_unit" id="weight_unit"
 				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2">
+				{{ if eq .User.WeightUnit "lbs" }}
 				<option value="lbs" selected>lbs</option>
 				<option value="kg">kg</option>
+				{{ end }}
+				{{ if eq .User.WeightUnit "kg" }}
+				<option value="lbs">lbs</option>
+				<option value="kg" selected>kg</option>
+				{{ end }}
 			</select>
 		</div>
 
@@ -56,16 +62,25 @@
 
 		<!-- Weigh-In Diet -->
 		<div>
-			<label for="weigh_in_diet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Diet*</label>
-			<input type="text" name="weigh_in_diet" id="weigh_in_diet"
-				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2" />
-			<!-- Submit Button -->
-			<div>
-				<button type="submit" onclick="document.body.dispatchEvent(new Event('submit_weigh_in'))"
-					class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl bg-blue-500 hover:bg-blue-700">
-					Submit
-				</button>
-			</div>
+			<label for="weigh_in_diet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Diet</label>
+			<select name="weight_in_diet" id="weight_in_diet"
+				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2">
+				{{ range .UserDiets }}
+				{{ if .IsDefault }}
+				<option value="{{ .DietType }}" selected>{{.DietType}}</option>
+				{{ else }}
+				<option value="{{.DietType}}">{{.DietType}}</option>
+				{{ end }}
+				{{ end }}
+			</select>
+		</div>
+		<!-- Submit Button -->
+		<div>
+			<button type="submit" onclick="document.body.dispatchEvent(new Event('submit_weigh_in'))"
+				class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold rounded-xl bg-blue-500 hover:bg-blue-700">
+				Submit
+			</button>
+		</div>
 	</form>
 	<p class="text-gray-500 text-left">*required</p>
 </div>
