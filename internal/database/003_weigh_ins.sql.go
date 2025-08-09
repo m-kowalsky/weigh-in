@@ -63,6 +63,16 @@ func (q *Queries) CreateWeighIn(ctx context.Context, arg CreateWeighInParams) (W
 	return i, err
 }
 
+const deleteWeighIn = `-- name: DeleteWeighIn :exec
+Delete from weigh_ins
+Where id = ?
+`
+
+func (q *Queries) DeleteWeighIn(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteWeighIn, id)
+	return err
+}
+
 const getWeighInById = `-- name: GetWeighInById :one
 Select id, created_at, updated_at, weight, weight_unit, log_date, note, cheated, alcohol, weigh_in_diet, user_id, log_date_display from weigh_ins
 where id = ?

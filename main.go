@@ -110,7 +110,7 @@ func main() {
 	r.Get("/", cfg.handlerIndex)
 	r.Get("/user/{user_id}", cfg.handlerGetUser)
 	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
-	r.Get("/weigh_ins", cfg.handlerGetWeighIns)
+	r.Get("/weigh-ins", cfg.handlerGetWeighIns)
 	r.Get("/landing_page", cfg.handlerLandingPage)
 	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
 	r.Get("/get_chart_data", cfg.handlerRefreshChart)
@@ -118,6 +118,7 @@ func main() {
 	r.Post("/update-user/{user_id}", cfg.handlerUpdateUserFromOnboard)
 	r.Get("/weigh-in/edit/{id}", cfg.handlerEditWeighIn)
 	r.Post("/weigh-in/update/{id}", cfg.handlerUpdateWeighIn)
+	r.Delete("/weigh-in/delete/{id}", cfg.handlerDeleteWeighIn)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))

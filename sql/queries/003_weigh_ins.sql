@@ -22,3 +22,7 @@ Update weigh_ins
 Set updated_at = ?, weight = ?, weight_unit = ?, log_date = ?, log_date_display = ?, note = ?, cheated = ?, alcohol = ?,
 weigh_in_diet = ?
 Where id = ?;
+
+-- name: DeleteWeighIn :exec
+Delete from weigh_ins
+Where id = ?;
