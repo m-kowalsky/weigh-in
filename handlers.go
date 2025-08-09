@@ -30,6 +30,7 @@ type PageData struct {
 	WeighIns         []database.WeighIn
 	WeighIn          database.WeighIn
 	LogDateFormatted string
+	Message          string
 }
 
 func (cfg *ApiConfig) handlerKamalHealthcheck(w http.ResponseWriter, _ *http.Request) {
@@ -212,6 +213,9 @@ func (cfg *ApiConfig) handlerGetWeighIns(w http.ResponseWriter, r *http.Request)
 		Title:    "All Weigh Ins",
 		WeighIns: weigh_ins,
 		User:     current_user,
+	}
+	if len(data.WeighIns) == 0 {
+		data.Message = "No Weigh Ins!  Go to Home to create a new Weigh In"
 	}
 
 	err = tmpl.ExecuteTemplate(w, "weigh_ins_display", data)
@@ -516,5 +520,19 @@ func (cfg *ApiConfig) handlerUpdateWeighIn(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		log.Fatal("Failed to update weigh in")
 	}
+
+}
+
+func (cfg *ApiConfig) handlerDeleteWeighIn(w http.ResponseWriter, r *http.Request) {
+
+	weighIn_id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		log.Fatal("Failed to parse weigh in id to int64 handlerDeleteWeighIn")
+	}
+	err = cfg.Db.DeleteWeighIn(r.Context(), weighIn_id)
+	if err != nil {
+		log.Fatal("Failed to delete weigh in")
+	}
+	fmt.Printf("Weigh In deleted: %v\n", weighIn_id)
 
 }
