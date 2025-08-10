@@ -586,3 +586,65 @@ func (cfg *ApiConfig) handlerCreateDiet(w http.ResponseWriter, r *http.Request) 
 	w.Write([]byte("New Diet Created!"))
 
 }
+
+func (cfg *ApiConfig) handlerEditAccount(w http.ResponseWriter, r *http.Request) {
+
+	user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
+	if err != nil {
+		log.Fatal("Failed to parse urlparam to int64")
+	}
+
+	current_user, err := cfg.Db.GetUserById(r.Context(), user_id)
+	if err != nil {
+		log.Fatal("Failed to get current user")
+	}
+
+	users_diets, err := cfg.Db.GetDietsByUserId(r.Context(), current_user.ID)
+	if err != nil {
+		log.Fatal("Failed to get users diets handlerEditAccount")
+	}
+	data := PageData{
+		User:      current_user,
+		UserDiets: users_diets,
+	}
+
+	tmpl.ExecuteTemplate(w, "account_edit", data)
+
+}
+
+func (cfg *ApiConfig) handlerUpdateAccount(w http.ResponseWriter, r *http.Request) {
+
+	user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
+	if err != nil {
+		log.Fatal("Failed to parse urlparam to int64")
+	}
+
+	current_user, err := cfg.Db.GetUserById(r.Context(), user_id)
+	if err != nil {
+		log.Fatal("Failed to get current user")
+	}
+	fmt.Printf("starting weight unit: %v\n", current_user.WeightUnit)
+
+	err = cfg.Db.UpdateUser(r.Context(), database.UpdateUserParams{
+		Username:       sql.NullString{String: r.FormValue("username"), Valid: true},
+		StartingWeight: current_user.StartingWeight,
+		WeightUnit:     r.FormValue("weight_unit"),
+		ID:             current_user.ID,
+	})
+	if err != nil {
+		log.Fatal("Failed to update user handlerUpdateAccount")
+	}
+
+	fmt.Printf("after updating weight unit: %v\n", current_user.WeightUnit)
+
+	err = cfg.Db.UpdateAllDietsIsDefault(r.Context())
+	if err != nil {
+		log.Fatal("Failed to set all diets as default handlerUdateAccount")
+	}
+
+	err = cfg.Db.UpdateDefaultDiet(r.Context(), r.FormValue("default_diet"))
+	if err != nil {
+		log.Fatal("Failed to update default diet")
+	}
+	w.Write([]byte("Account updated successfully!"))
+}
