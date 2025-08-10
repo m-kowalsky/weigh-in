@@ -119,6 +119,7 @@ func main() {
 	r.Get("/weigh-in/edit/{id}", cfg.handlerEditWeighIn)
 	r.Post("/weigh-in/update/{id}", cfg.handlerUpdateWeighIn)
 	r.Delete("/weigh-in/delete/{id}", cfg.handlerDeleteWeighIn)
+	r.Post("/diet/new/{user_id}", cfg.handlerCreateDiet)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))

@@ -548,3 +548,31 @@ func (cfg *ApiConfig) handlerDeleteWeighIn(w http.ResponseWriter, r *http.Reques
 	fmt.Printf("Weigh In deleted: %v\n", weighIn_id)
 
 }
+
+func (cfg *ApiConfig) handlerCreateDiet(w http.ResponseWriter, r *http.Request) {
+
+	user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
+	if err != nil {
+		log.Fatal("Failed to get user id from url handlerCreateDiet")
+	}
+	is_default := false
+	if r.FormValue("is_default") == "true" {
+		is_default = true
+	}
+	// Get diet type from form and convert to title case
+	diet := r.FormValue("diet")
+	caser := cases.Title(language.English)
+	cap_diet := caser.String(diet)
+
+	new_diet, err := cfg.Db.CreateDiet(r.Context(), database.CreateDietParams{
+		UserID:    user_id,
+		DietType:  cap_diet,
+		IsDefault: is_default,
+	})
+	if err != nil {
+		log.Fatal("Failed to create new diet")
+	}
+	fmt.Printf("diet created: %v\n", new_diet)
+	w.Write([]byte("New Diet Created!"))
+
+}
