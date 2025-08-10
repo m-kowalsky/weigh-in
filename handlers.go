@@ -558,6 +558,14 @@ func (cfg *ApiConfig) handlerCreateDiet(w http.ResponseWriter, r *http.Request) 
 	is_default := false
 	if r.FormValue("is_default") == "true" {
 		is_default = true
+		err = cfg.Db.UpdateAllDietsIsDefault(r.Context())
+		if err != nil {
+			log.Fatal("Failed to update all diets handlerCreateDiet")
+		}
+	}
+	diets, err := cfg.Db.GetDietsByUserId(r.Context(), user_id)
+	for _, diet := range diets {
+		fmt.Println(diet)
 	}
 	// Get diet type from form and convert to title case
 	diet := r.FormValue("diet")
