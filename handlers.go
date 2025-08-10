@@ -274,7 +274,7 @@ func (cfg *ApiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 	// fmt.Printf("logdate display: %v\n", log_date_display)
 	// fmt.Printf("weigh in diet: %v\n", r.FormValue("weigh_in_diet"))
 
-	weighInNew, err := cfg.Db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
+	_, err = cfg.Db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		Weight:         weight,
@@ -290,8 +290,9 @@ func (cfg *ApiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		http.Error(w, "Failed to create new weigh in", http.StatusBadRequest)
 		return
+	} else {
+		w.Write([]byte("Weigh In Created!"))
 	}
-	fmt.Printf("weigh in: %+v\n", weighInNew)
 
 }
 
