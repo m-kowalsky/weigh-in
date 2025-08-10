@@ -15,3 +15,7 @@ Set is_default = false;
 Update diets
 Set is_default = true
 Where diet_type = ?;
+
+-- name: DeleteDiet :exec
+Delete from diets
+Where id = ?;

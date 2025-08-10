@@ -64,7 +64,7 @@
 		<!-- Weigh-In Diet -->
 		<div>
 			<label for="weigh_in_diet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Diet</label>
-			<select name="weight_in_diet" id="weight_in_diet"
+			<select name="weigh_in_diet" id="weigh_in_diet"
 				class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2">
 				{{ range .UserDiets }}
 				{{ if .IsDefault }}
@@ -76,14 +76,23 @@
 			</select>
 		</div>
 
-		<!-- Modal toggle -->
-		<div class="pb-px">
-			<button type="button" data-modal-target="diet-modal" data-modal-toggle="diet-modal"
-				class="text-gray-500 text-left hover:underline cursor-pointer">
-				Create New Diet
-			</button>
-		</div>
+		<!-- Add diet Modal toggle -->
+		<div class="flex justify-between">
+			<div class="pb-px">
+				<button type="button" data-modal-target="create-diet-modal" data-modal-toggle="create-diet-modal"
+					class="text-gray-500 hover:underline cursor-pointer">
+					Create New Diet
+				</button>
+			</div>
 
+			<!-- Delete diet Modal toggle -->
+			<div class="pb-px">
+				<button type="button" data-modal-target="delete-diet-modal" data-modal-toggle="delete-diet-modal"
+					class="text-gray-500 text-right hover:underline cursor-pointer">
+					Delete Diet
+				</button>
+			</div>
+		</div>
 
 		<!-- Submit Button -->
 		<div>
@@ -93,19 +102,19 @@
 			</button>
 		</div>
 	</form>
-	<!-- Main modal -->
-	<div id="diet-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 
+	<!-- Create diet modal -->
+	<div id="create-diet-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 
 		justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
 		<div class="relative p-4 w-full max-w-md max-h-full">
 			<!-- Modal content -->
 			<div class="w-full bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-4 space-y-6">
 				<!-- Modal header -->
-				<h2 id="modal-title" class="text-2xl font-bold text-gray-800 text-center dark:text-white">
+				<h2 id="create-modal-title" class="text-2xl font-bold text-gray-800 text-center dark:text-white">
 					Add New Diet
 				</h2>
 
 				<!-- Modal body -->
-				<form class="space-y-4" hx-post="diet/new/{{ .User.ID }}" hx-target="#modal-title"
+				<form class="space-y-4" hx-post="/diet/new/{{ .User.ID }}" hx-target="#create-modal-title"
 					hx-on::after-request="if(event.detail.successful) this.reset()">
 					<!-- Diet input -->
 					<div>
@@ -135,6 +144,46 @@
 			</div>
 		</div>
 	</div>
+	<!-- Delete diet modal -->
+	<div id="delete-diet-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 
+		justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+		<div class="relative p-4 w-full max-w-md max-h-full">
+			<!-- Modal content -->
+			<div class="w-full bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-4 space-y-6">
+				<!-- Modal header -->
+				<h2 id="delete-modal-title" class="text-2xl font-bold text-gray-800 text-center dark:text-white">
+					Delete Diet
+				</h2>
+
+				<!-- Modal body -->
+				<form class="space-y-4" hx-delete="diet/delete" hx-target="#delete-modal-title"
+					hx-on::after-request="if(event.detail.successful) this.reload()">
+
+					<!-- Diet type -->
+					<div>
+						<label for="diet_id"
+							class="block text-sm font-medium text-gray-700 dark:text-gray-300">Diet</label>
+						<select name="diet_id" id="diet_id"
+							class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 p-2">
+							{{ range .UserDiets }}
+							{{ if .IsDefault }}
+							<option value="{{ .ID }}" selected>{{.DietType}}</option>
+							{{ else }}
+							<option value="{{ .ID }}">{{.DietType}}</option>
+							{{ end }}
+							{{ end }}
+						</select>
+					</div>
+					<!-- Submit button -->
+					<button type="submit" onclick="document.body.dispatchEvent(new Event('delete_diet'))" class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold 
+			rounded-xl bg-blue-500 hover:bg-blue-700">
+						Delete Diet
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+
 	<p class="text-gray-500 text-left">*required</p>
 </div>
 {{ end }}
