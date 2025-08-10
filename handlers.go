@@ -472,6 +472,11 @@ func (cfg *ApiConfig) handlerEditWeighIn(w http.ResponseWriter, r *http.Request)
 		log.Println("Failed to get weighIn by id")
 	}
 
+	users_diets, err := cfg.Db.GetDietsByUserId(r.Context(), weighIn.UserID)
+	if err != nil {
+		log.Println("Failed to get users diets from weighIn.UserID")
+	}
+
 	// Format log date for html datepicker
 	logDateFormatted := weighIn.LogDate.Format("2006-01-02")
 
@@ -479,6 +484,7 @@ func (cfg *ApiConfig) handlerEditWeighIn(w http.ResponseWriter, r *http.Request)
 		Title:            "Weigh In - Edit",
 		WeighIn:          weighIn,
 		LogDateFormatted: logDateFormatted,
+		UserDiets:        users_diets,
 	}
 
 	err = tmpl.ExecuteTemplate(w, "edit_weigh_in_form", data)
