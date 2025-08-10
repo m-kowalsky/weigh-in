@@ -540,6 +540,9 @@ func (cfg *ApiConfig) handlerUpdateWeighIn(w http.ResponseWriter, r *http.Reques
 	})
 	if err != nil {
 		log.Println("Failed to update weigh in")
+		w.Write([]byte("Failed to update weigh in"))
+	} else {
+		w.Write([]byte("Weigh In updated successfully!"))
 	}
 
 }

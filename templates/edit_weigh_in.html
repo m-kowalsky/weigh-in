@@ -3,9 +3,11 @@
 	<!-- Weigh-In Card -->
 	<div
 		class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-lg bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-6">
-		<h2 class="text-2xl font-bold text-gray-800 text-center dark:text-white">Edit Weigh-In</h2>
+		<h2 id="edit-weighIn-title" class="text-2xl font-bold text-gray-800 text-center dark:text-white">Edit Weigh-In
+		</h2>
 
-		<form class="space-y-3" hx-post="/weigh-in/update/{{ .WeighIn.ID }}" hx-swap="none">
+		<form class="space-y-3" hx-post="/weigh-in/update/{{ .WeighIn.ID }}" hx-target="#edit-weighIn-title"
+			hx-push-url="true">
 			<!-- Weight -->
 			<div>
 				<label for="weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Weight*</label>
