@@ -154,6 +154,8 @@ func (cfg *ApiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	chart_data, err := cfg.GetChartData(w, r)
 	if err != nil {
 		log.Fatal("Failed to get chart data in index handler")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	}
 
 	// Get current date for weigh in form datepicker default
@@ -163,9 +165,10 @@ func (cfg *ApiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	users_diets, err := cfg.Db.GetDietsByUserId(r.Context(), current_user.ID)
 	if err != nil {
 		log.Fatal("Failed to get users diets")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	}
 
-	fmt.Printf("default diet: %v\n", users_diets[0])
 	data := PageData{
 		User:        current_user,
 		Provider:    current_user.Provider.String,
