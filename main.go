@@ -112,7 +112,6 @@ func main() {
 	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
 	r.Get("/weigh-ins", cfg.handlerGetWeighIns)
 	r.Get("/landing_page", cfg.handlerLandingPage)
-	r.Post("/weigh_in/create", cfg.handlerCreateWeighIn)
 	r.Get("/get_chart_data", cfg.handlerRefreshChart)
 	r.Get("/onboard-user", cfg.handlerOnboard)
 	r.Post("/update-user/{user_id}", cfg.handlerUpdateUserFromOnboard)
