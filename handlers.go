@@ -222,7 +222,6 @@ func (cfg *ApiConfig) handlerGetWeighIns(w http.ResponseWriter, r *http.Request)
 	}
 
 	data := PageData{
-		Title:    "All Weigh Ins",
 		WeighIns: weigh_ins,
 		User:     current_user,
 	}
