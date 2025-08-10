@@ -75,3 +75,14 @@ func (q *Queries) UpdateAllDietsIsDefault(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, updateAllDietsIsDefault)
 	return err
 }
+
+const updateDefaultDiet = `-- name: UpdateDefaultDiet :exec
+Update diets
+Set is_default = true
+Where diet_type = ?
+`
+
+func (q *Queries) UpdateDefaultDiet(ctx context.Context, dietType string) error {
+	_, err := q.db.ExecContext(ctx, updateDefaultDiet, dietType)
+	return err
+}
