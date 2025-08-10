@@ -33,6 +33,16 @@ func (q *Queries) CreateDiet(ctx context.Context, arg CreateDietParams) (Diet, e
 	return i, err
 }
 
+const deleteDiet = `-- name: DeleteDiet :exec
+Delete from diets
+Where id = ?
+`
+
+func (q *Queries) DeleteDiet(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteDiet, id)
+	return err
+}
+
 const getDietsByUserId = `-- name: GetDietsByUserId :many
 Select id, diet_type, user_id, is_default from diets
 Where user_id = ?

@@ -153,7 +153,7 @@ func (cfg *ApiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 
 	chart_data, err := cfg.GetChartData(w, r)
 	if err != nil {
-		log.Fatal("Failed to get chart data in index handler")
+		log.Println("Failed to get chart data in index handler")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
@@ -164,7 +164,7 @@ func (cfg *ApiConfig) handlerIndex(w http.ResponseWriter, r *http.Request) {
 	// Get users diets for setting default diet on weigh in form and setting diet dropdown options
 	users_diets, err := cfg.Db.GetDietsByUserId(r.Context(), current_user.ID)
 	if err != nil {
-		log.Fatal("Failed to get users diets")
+		log.Println("Failed to get users diets")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
@@ -213,12 +213,12 @@ func (cfg *ApiConfig) handlerGetWeighIns(w http.ResponseWriter, r *http.Request)
 
 	current_user, err := cfg.getCurrentUser(w, r)
 	if err != nil {
-		log.Fatal("Failed to get user handlerGetWeighIns")
+		log.Println("Failed to get user handlerGetWeighIns")
 	}
 
 	weigh_ins, err := cfg.Db.GetWeighInsByUser(r.Context(), current_user.ID)
 	if err != nil {
-		log.Fatal("Failed to get users weigh ins")
+		log.Println("Failed to get users weigh ins")
 	}
 
 	data := PageData{
@@ -271,7 +271,8 @@ func (cfg *ApiConfig) handlerCreateWeighIn(w http.ResponseWriter, r *http.Reques
 	log_date, err := time.Parse(time_layout, r.FormValue("log_date"))
 
 	log_date_display := log_date.Format("Jan 2, 2006")
-	fmt.Printf("logdate display: %v\n", log_date_display)
+	// fmt.Printf("logdate display: %v\n", log_date_display)
+	// fmt.Printf("weigh in diet: %v\n", r.FormValue("weigh_in_diet"))
 
 	weighInNew, err := cfg.Db.CreateWeighIn(r.Context(), database.CreateWeighInParams{
 		CreatedAt:      time.Now(),
@@ -316,7 +317,7 @@ func (cfg *ApiConfig) handlerRefreshChart(w http.ResponseWriter, r *http.Request
 
 	chart_html, err := cfg.GetChartData(w, r)
 	if err != nil {
-		log.Fatal("Failed to get chart data in refresh chart handler")
+		log.Println("Failed to get chart data in refresh chart handler")
 	}
 	data := PageData{
 		ChartHTML: template.HTML(chart_html),
@@ -369,7 +370,7 @@ func (cfg *ApiConfig) GetChartData(w http.ResponseWriter, r *http.Request) ([]by
 	})
 
 	if err != nil {
-		log.Fatal("Failed to get weighIn data in getChartData()")
+		log.Println("Failed to get weighIn data in getChartData()")
 	}
 
 	chart_data := ChartData{}
@@ -430,7 +431,7 @@ func (cfg *ApiConfig) handlerUpdateUserFromOnboard(w http.ResponseWriter, r *htt
 
 	starting_weight, err := strconv.ParseInt(r.FormValue("starting_weight"), 10, 64)
 	if err != nil {
-		log.Fatal("Failed to parse starting weight string to int64")
+		log.Println("Failed to parse starting weight string to int64")
 	}
 	weight_unit := r.FormValue("preferred_weight_unit")
 	username := r.FormValue("username")
@@ -463,12 +464,12 @@ func (cfg *ApiConfig) handlerEditWeighIn(w http.ResponseWriter, r *http.Request)
 
 	weighIn_id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		log.Fatal("Failed to parse weigh in id to int64")
+		log.Println("Failed to parse weigh in id to int64")
 	}
 
 	weighIn, err := cfg.Db.GetWeighInById(r.Context(), weighIn_id)
 	if err != nil {
-		log.Fatal("Failed to get weighIn by id")
+		log.Println("Failed to get weighIn by id")
 	}
 
 	// Format log date for html datepicker
@@ -492,7 +493,7 @@ func (cfg *ApiConfig) handlerUpdateWeighIn(w http.ResponseWriter, r *http.Reques
 
 	weighIn_id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		log.Fatal("Failed to parse weigh in id to int64 handlerUpdateWeighIn")
+		log.Println("Failed to parse weigh in id to int64 handlerUpdateWeighIn")
 	}
 
 	fmt.Printf("weighIn id: %v\n", weighIn_id)
@@ -532,7 +533,7 @@ func (cfg *ApiConfig) handlerUpdateWeighIn(w http.ResponseWriter, r *http.Reques
 		ID:             weighIn_id,
 	})
 	if err != nil {
-		log.Fatal("Failed to update weigh in")
+		log.Println("Failed to update weigh in")
 	}
 
 }
@@ -541,11 +542,11 @@ func (cfg *ApiConfig) handlerDeleteWeighIn(w http.ResponseWriter, r *http.Reques
 
 	weighIn_id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		log.Fatal("Failed to parse weigh in id to int64 handlerDeleteWeighIn")
+		log.Println("Failed to parse weigh in id to int64 handlerDeleteWeighIn")
 	}
 	err = cfg.Db.DeleteWeighIn(r.Context(), weighIn_id)
 	if err != nil {
-		log.Fatal("Failed to delete weigh in")
+		log.Println("Failed to delete weigh in")
 	}
 	fmt.Printf("Weigh In deleted: %v\n", weighIn_id)
 
@@ -555,14 +556,14 @@ func (cfg *ApiConfig) handlerCreateDiet(w http.ResponseWriter, r *http.Request) 
 
 	user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
 	if err != nil {
-		log.Fatal("Failed to get user id from url handlerCreateDiet")
+		log.Println("Failed to get user id from url handlerCreateDiet")
 	}
 	is_default := false
 	if r.FormValue("is_default") == "true" {
 		is_default = true
 		err = cfg.Db.UpdateAllDietsIsDefault(r.Context())
 		if err != nil {
-			log.Fatal("Failed to update all diets handlerCreateDiet")
+			log.Println("Failed to update all diets handlerCreateDiet")
 		}
 	}
 	diets, err := cfg.Db.GetDietsByUserId(r.Context(), user_id)
@@ -580,10 +581,12 @@ func (cfg *ApiConfig) handlerCreateDiet(w http.ResponseWriter, r *http.Request) 
 		IsDefault: is_default,
 	})
 	if err != nil {
-		log.Fatal("Failed to create new diet")
+		log.Println("Failed to create new diet")
+		w.Write([]byte("Please enter a valid diet name"))
+	} else {
+		fmt.Printf("diet created: %v\n", new_diet)
+		w.Write([]byte("New Diet Created!"))
 	}
-	fmt.Printf("diet created: %v\n", new_diet)
-	w.Write([]byte("New Diet Created!"))
 
 }
 
@@ -591,17 +594,17 @@ func (cfg *ApiConfig) handlerEditAccount(w http.ResponseWriter, r *http.Request)
 
 	user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
 	if err != nil {
-		log.Fatal("Failed to parse urlparam to int64")
+		log.Println("Failed to parse urlparam to int64")
 	}
 
 	current_user, err := cfg.Db.GetUserById(r.Context(), user_id)
 	if err != nil {
-		log.Fatal("Failed to get current user")
+		log.Println("Failed to get current user")
 	}
 
 	users_diets, err := cfg.Db.GetDietsByUserId(r.Context(), current_user.ID)
 	if err != nil {
-		log.Fatal("Failed to get users diets handlerEditAccount")
+		log.Println("Failed to get users diets handlerEditAccount")
 	}
 	data := PageData{
 		User:      current_user,
@@ -616,12 +619,12 @@ func (cfg *ApiConfig) handlerUpdateAccount(w http.ResponseWriter, r *http.Reques
 
 	user_id, err := strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64)
 	if err != nil {
-		log.Fatal("Failed to parse urlparam to int64")
+		log.Println("Failed to parse urlparam to int64")
 	}
 
 	current_user, err := cfg.Db.GetUserById(r.Context(), user_id)
 	if err != nil {
-		log.Fatal("Failed to get current user")
+		log.Println("Failed to get current user")
 	}
 	fmt.Printf("starting weight unit: %v\n", current_user.WeightUnit)
 
@@ -632,19 +635,33 @@ func (cfg *ApiConfig) handlerUpdateAccount(w http.ResponseWriter, r *http.Reques
 		ID:             current_user.ID,
 	})
 	if err != nil {
-		log.Fatal("Failed to update user handlerUpdateAccount")
+		log.Println("Failed to update user handlerUpdateAccount")
 	}
 
 	fmt.Printf("after updating weight unit: %v\n", current_user.WeightUnit)
 
 	err = cfg.Db.UpdateAllDietsIsDefault(r.Context())
 	if err != nil {
-		log.Fatal("Failed to set all diets as default handlerUdateAccount")
+		log.Println("Failed to set all diets as default handlerUdateAccount")
 	}
 
 	err = cfg.Db.UpdateDefaultDiet(r.Context(), r.FormValue("default_diet"))
 	if err != nil {
-		log.Fatal("Failed to update default diet")
+		log.Println("Failed to update default diet")
 	}
 	w.Write([]byte("Account updated successfully!"))
+}
+
+func (cfg *ApiConfig) handlerDeleteDiet(w http.ResponseWriter, r *http.Request) {
+
+	diet_id, err := strconv.ParseInt(r.FormValue("diet_id"), 10, 64)
+	fmt.Printf("diet id from form: %v\n", diet_id)
+	if err != nil {
+		log.Println("Failed to parse diet id to int64")
+	}
+	err = cfg.Db.DeleteDiet(r.Context(), diet_id)
+	if err != nil {
+		log.Println("Failed to delete diet")
+	}
+	w.Write([]byte("Diet deleted successfully"))
 }
