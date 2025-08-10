@@ -65,3 +65,13 @@ func (q *Queries) GetDietsByUserId(ctx context.Context, userID int64) ([]Diet, e
 	}
 	return items, nil
 }
+
+const updateAllDietsIsDefault = `-- name: UpdateAllDietsIsDefault :exec
+Update diets
+Set is_default = false
+`
+
+func (q *Queries) UpdateAllDietsIsDefault(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, updateAllDietsIsDefault)
+	return err
+}

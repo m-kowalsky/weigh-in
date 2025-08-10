@@ -6,3 +6,7 @@ Returning *;
 -- name: GetDietsByUserId :many
 Select * from diets
 Where user_id = ?;
+
+-- name: UpdateAllDietsIsDefault :exec
+Update diets
+Set is_default = false;
