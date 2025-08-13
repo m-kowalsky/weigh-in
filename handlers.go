@@ -220,16 +220,22 @@ func (cfg *ApiConfig) handlerGetWeighIns(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		log.Println("Failed to get users weigh ins")
 	}
+	users_diets, err := cfg.Db.GetDietsByUserId(r.Context(), current_user.ID)
+	if err != nil {
+		log.Println("Failed to get users diets handlerGetWeighIns")
+	}
 
 	data := PageData{
-		WeighIns: weigh_ins,
-		User:     current_user,
+		WeighIns:  weigh_ins,
+		User:      current_user,
+		UserDiets: users_diets,
 	}
+
 	if len(data.WeighIns) == 0 {
 		data.Message = "No Weigh Ins!  Go to Home to create a new Weigh In"
 	}
 
-	err = tmpl.ExecuteTemplate(w, "weigh_ins_display", data)
+	err = tmpl.ExecuteTemplate(w, "weigh_ins_and_diets", data)
 	if err != nil {
 		fmt.Printf("Template error: %v", err)
 		http.Error(w, "Template rendering failed", http.StatusInternalServerError)
@@ -558,7 +564,7 @@ func (cfg *ApiConfig) handlerDeleteWeighIn(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		log.Println("Failed to delete weigh in")
 	}
-	fmt.Printf("Weigh In deleted: %v\n", weighIn_id)
+	w.Write([]byte("Weigh In Deleted Successfully"))
 
 }
 
@@ -576,10 +582,7 @@ func (cfg *ApiConfig) handlerCreateDiet(w http.ResponseWriter, r *http.Request) 
 			log.Println("Failed to update all diets handlerCreateDiet")
 		}
 	}
-	diets, err := cfg.Db.GetDietsByUserId(r.Context(), user_id)
-	for _, diet := range diets {
-		fmt.Println(diet)
-	}
+
 	// Get diet type from form and convert to title case
 	diet := r.FormValue("diet")
 	caser := cases.Title(language.English)
@@ -595,7 +598,7 @@ func (cfg *ApiConfig) handlerCreateDiet(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte("Please enter a valid diet name"))
 	} else {
 		fmt.Printf("diet created: %v\n", new_diet)
-		w.Write([]byte("New Diet Created!"))
+		w.Write([]byte("Diet Created Successfully"))
 	}
 
 }
@@ -664,14 +667,14 @@ func (cfg *ApiConfig) handlerUpdateAccount(w http.ResponseWriter, r *http.Reques
 
 func (cfg *ApiConfig) handlerDeleteDiet(w http.ResponseWriter, r *http.Request) {
 
-	diet_id, err := strconv.ParseInt(r.FormValue("diet_id"), 10, 64)
-	fmt.Printf("diet id from form: %v\n", diet_id)
+	diet_id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		log.Println("Failed to parse diet id to int64")
 	}
+
 	err = cfg.Db.DeleteDiet(r.Context(), diet_id)
 	if err != nil {
 		log.Println("Failed to delete diet")
 	}
-	w.Write([]byte("Diet deleted successfully"))
+	w.Write([]byte("<div>Diet deleted successfully</div>"))
 }

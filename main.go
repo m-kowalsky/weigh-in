@@ -121,7 +121,7 @@ func main() {
 	r.Post("/diet/new/{user_id}", cfg.handlerCreateDiet)
 	r.Get("/account/edit/{user_id}", cfg.handlerEditAccount)
 	r.Post("/account/update/{user_id}", cfg.handlerUpdateAccount)
-	r.Delete("/diet/delete", cfg.handlerDeleteDiet)
+	r.Delete("/diet/delete/{id}", cfg.handlerDeleteDiet)
 
 	// Serve static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))

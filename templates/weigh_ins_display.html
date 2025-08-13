@@ -1,49 +1,224 @@
-{{ block "weigh_ins_display" . }}
-<div class="w-full flex items-center justify-center">{{ if .Message }}
-	<h4 class="text-xl sm:text-2xl font-bold text-gray-800 text-center">
-		{{ .Message }}
+{{ block "weigh_ins_and_diets" . }}
+<script>
+	document.addEventListener("htmx:afterSwap", function () {
+		if (typeof window.initFlowbite === "function") {
+			window.initFlowbite();
+		}
+	});
+</script>
+
+<div class="flex items-center justify-center mb-4">
+	<h4 id="success-div" class="text-xl sm:text-2xl font-bold text-gray-800 text-center">
+		{{ if .Message }}{{ .Message }}{{ end }}
 	</h4>
-	{{ end }}
 </div>
-{{ range .WeighIns }}
-<!-- Weigh-In Display Card -->
-<div id="this-weigh-in"
-	class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-lg mx-auto bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-4 mb-4">
-	<!-- Date -->
-	<h2 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">
-		{{ .LogDateDisplay }}
-	</h2>
+<div class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 p-4">
+	<!-- Left Column: Weigh Ins -->
+	<div>
+		<h2 class="text-2xl font-bold text-gray-800 dark:text-gray-800 mb-4 text-center">Weigh Ins</h2>
 
-	<!-- Weight -->
-	<p class="text-lg sm:text-xl text-gray-700 dark:text-gray-300 text-center font-medium">
-		{{ .Weight }} {{ .WeightUnit }}
-	</p>
 
-	<!-- Note -->
-	<p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 text-center italic">
-		{{ if eq .Note.String "" }} No Note {{ else }} Note: {{ .Note.String }} {{ end }}
-	</p>
+		{{ range .WeighIns }}
+		<!-- Weigh-In Display Card -->
+		<div id="this-weigh-in-{{ .ID }}" class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 space-y-4 mb-4">
+			<!-- Date -->
+			<h2 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">
+				{{ .LogDateDisplay }}
+			</h2>
 
-	<!-- Other Fields -->
-	<div class="grid grid-cols-2 gap-4 text-sm sm:text-base text-gray-700 dark:text-gray-300">
-		<div><span class="font-semibold">Cheated:</span> {{if .Cheated }} Yes {{ else }} No {{ end }} </div>
-		<div><span class="font-semibold">Alcohol:</span> {{if .Alcohol }} Yes {{ else }} No {{ end }}
+			<!-- Weight -->
+			<p class="text-lg sm:text-xl text-gray-700 dark:text-gray-300 text-center font-medium">
+				{{ .Weight }} {{ .WeightUnit }}
+			</p>
+
+			<!-- Note -->
+			<p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 text-center italic">
+				{{ if eq .Note.String "" }} No Note {{ else }} Note: {{ .Note.String }} {{ end }}
+			</p>
+
+			<!-- Other Fields -->
+			<div class="grid grid-cols-2 gap-4 text-sm sm:text-base text-gray-700 dark:text-gray-300">
+				<div><span class="font-semibold">Cheated:</span> {{ if .Cheated }} Yes {{ else }} No {{ end }}</div>
+				<div><span class="font-semibold">Alcohol:</span> {{ if .Alcohol }} Yes {{ else }} No {{ end }}</div>
+				<div class="col-span-2"><span class="font-semibold">Diet:</span> {{ .WeighInDiet }}</div>
+			</div>
+
+			<!-- Action Links -->
+			<div class="flex justify-center gap-6 text-sm sm:text-base">
+				<button
+					class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
+					hx-get="/weigh-in/edit/{{ .ID }}" hx-target="#main_body" hx-push-url="true" hx-swap="innerHTML">
+					Edit
+				</button>
+				<button class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-semibold"
+					type="button" hx-delete="/weigh-in/delete/{{ .ID }}"
+					hx-confirm="Are you sure you want to delete this Weigh In?" hx-target="#this-weigh-in-{{.ID}}"
+					hx-swap="outerHTML">
+					Delete </button>
+			</div>
 		</div>
-		<div class="col-span-2"><span class="font-semibold">Diet:</span> {{ .WeighInDiet }}</div>
+		{{ end }}
 	</div>
 
-	<!-- Action Links -->
-	<div class="flex justify-center gap-6 text-sm sm:text-base">
-		<button class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
-			hx-get="/weigh-in/edit/{{ .ID }}" hx-target="#main_body" hx-push-url="true" hx-swap="innerHTML">
-			Edit
-		</button>
-		<button class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-semibold"
-			type="button" hx-delete="/weigh-in/delete/{{ .ID }}"
-			hx-confirm="Are you sure you want to delete this Weigh In?" hx-swap="outerHTML" hx-target="#this-weigh-in">
-			Delete
-		</button>
+	<!-- Right Column: Diets -->
+	<div>
+		<h2 class="text-2xl font-bold text-gray-800 dark:text-gray-800 mb-4 text-center">Diets</h2>
+
+		<!-- Add diet Modal toggle -->
+		<div class="flex items-center">
+			<button type="button" data-modal-target="create-modal" data-modal-toggle="create-modal"
+				class="text-gray-500 hover:underline cursor-pointer">
+				Create New Diet
+			</button>
+		</div>
+
+		{{ range .UserDiets }}
+		<!-- Diet Display Card -->
+		<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 flex items-center justify-between mb-4">
+			<!-- Diet Name -->
+			<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+				{{ .DietType }}
+			</h2>
+
+			<!-- Delete Button -->
+			<form hx-delete="/diet/delete/{{ .ID }}" hx-confirm="Are you sure you want to delete this diet?"
+				hx-target="closest div" hx-swap="outerHTML">
+				<button type="submit" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+					<!-- Trash Icon -->
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+						stroke="currentColor" class="w-6 h-6">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+				</button>
+			</form>
+		</div>
+		{{ end }}
 	</div>
 </div>
+<!-- Create diet modal -->
+<div id="create-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 
+		justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+	<div class="relative p-4 w-full max-w-md max-h-full">
+		<!-- Modal content -->
+		<div class="w-full bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-4 space-y-6">
+			<!-- Modal header -->
+			<h2 id="create-modal-title" class="text-2xl font-bold text-gray-800 text-center dark:text-white">
+				Add New Diet
+			</h2>
+
+			<!-- Modal body -->
+			<form class="space-y-4" hx-post="/diet/new/{{ .User.ID }}" hx-target="#create-modal-title"
+				hx-on::after-request="if(event.detail.successful) this.reset()">
+				<!-- Diet input -->
+				<div>
+					<label for="diet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+						Diet*
+					</label>
+					<input type="text" name="diet" id="diet" class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 
+							dark:border-gray-600 text-gray-900 dark:text-white 
+							focus:ring-blue-500 focus:border-blue-500 p-2" placeholder="Enter diet name" autocomplete="off" required>
+				</div>
+
+				<!-- Default diet checkbox -->
+				<div class="flex items-center">
+					<input id="default-diet" name="is_default" type="checkbox" class="rounded text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 
+							dark:border-gray-600 focus:ring-blue-500" value="true">
+					<label for="default-diet" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+						Set as default diet
+					</label>
+				</div>
+
+				<!-- Submit button -->
+				<button type="submit" onclick="document.body.dispatchEvent(new Event('submit_new_diet'))" class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold 
+			rounded-xl bg-blue-500 hover:bg-blue-700">
+					Save Diet
+				</button>
+			</form>
+		</div>
+	</div>
+</div>
+
 {{ end }}
-{{ end }}
+
+
+<!-- {{ block "weigh_ins_display" . }} -->
+<!-- <div class="w-full flex items-center justify-center">{{ if .Message }} -->
+<!-- 	<h4 class="text-xl sm:text-2xl font-bold text-gray-800 text-center"> -->
+<!-- 		{{ .Message }} -->
+<!-- 	</h4> -->
+<!-- 	{{ end }} -->
+<!-- </div> -->
+<!-- {{ range .WeighIns }} -->
+<!-- <!-- Weigh-In Display Card --> -->
+<!-- <div id="this-weigh-in" -->
+<!-- 	class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-lg mx-auto bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-6 space-y-4 mb-4"> -->
+<!-- 	<!-- Date --> -->
+<!-- 	<h2 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 text-center"> -->
+<!-- 		{{ .LogDateDisplay }} -->
+<!-- 	</h2> -->
+<!---->
+<!-- 	<!-- Weight --> -->
+<!-- 	<p class="text-lg sm:text-xl text-gray-700 dark:text-gray-300 text-center font-medium"> -->
+<!-- 		{{ .Weight }} {{ .WeightUnit }} -->
+<!-- 	</p> -->
+<!---->
+<!-- 	<!-- Note --> -->
+<!-- 	<p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 text-center italic"> -->
+<!-- 		{{ if eq .Note.String "" }} No Note {{ else }} Note: {{ .Note.String }} {{ end }} -->
+<!-- 	</p> -->
+<!---->
+<!-- 	<!-- Other Fields --> -->
+<!-- 	<div class="grid grid-cols-2 gap-4 text-sm sm:text-base text-gray-700 dark:text-gray-300"> -->
+<!-- 		<div><span class="font-semibold">Cheated:</span> {{if .Cheated }} Yes {{ else }} No {{ end }} </div> -->
+<!-- 		<div><span class="font-semibold">Alcohol:</span> {{if .Alcohol }} Yes {{ else }} No {{ end }} -->
+<!-- 		</div> -->
+<!-- 		<div class="col-span-2"><span class="font-semibold">Diet:</span> {{ .WeighInDiet }}</div> -->
+<!-- 	</div> -->
+<!---->
+<!-- 	<!-- Action Links --> -->
+<!-- 	<div class="flex justify-center gap-6 text-sm sm:text-base"> -->
+<!-- 		<button class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-semibold" -->
+<!-- 			hx-get="/weigh-in/edit/{{ .ID }}" hx-target="#main_body" hx-push-url="true" hx-swap="innerHTML"> -->
+<!-- 			Edit -->
+<!-- 		</button> -->
+<!-- 		<button class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-semibold" -->
+<!-- 			type="button" hx-delete="/weigh-in/delete/{{ .ID }}" -->
+<!-- 			hx-confirm="Are you sure you want to delete this Weigh In?" hx-swap="outerHTML" hx-target="#this-weigh-in"> -->
+<!-- 			Delete -->
+<!-- 		</button> -->
+<!-- 	</div> -->
+<!-- </div> -->
+<!-- {{ end }} -->
+<!---->
+<!-- <div> -->
+<!---->
+<!-- 	{{template "diets_display" . }} -->
+<!-- </div> -->
+<!-- {{ end }} -->
+<!---->
+<!-- {{ block "diets_display" . }} -->
+<!-- <div class="space-y-4"> -->
+<!-- 	{{ range .UserDiets }} -->
+<!-- 	<!-- Diet Display Card --> -->
+<!-- 	<div -->
+<!-- 		class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 max-w-lg mx-auto bg-white flex items-center justify-between rounded-2xl shadow-md dark:bg-gray-800 p-6"> -->
+<!-- 		<!-- Diet Name --> -->
+<!-- 		<h2 class="text-xl font-semibold text-gray-900 dark:text-white"> -->
+<!-- 			{{ .DietType }} -->
+<!-- 		</h2> -->
+<!---->
+<!-- 		<!-- Delete Button --> -->
+<!-- 		<form hx-delete="/diet/{{ .ID }}" hx-confirm="Are you sure you want to delete this diet?" -->
+<!-- 			hx-target="closest div" hx-swap="outerHTML"> -->
+<!-- 			<button type="submit" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"> -->
+<!-- 				<!-- Trash Icon --> -->
+<!-- 				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" -->
+<!-- 					stroke="currentColor" class="w-6 h-6"> -->
+<!-- 					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /> -->
+<!-- 				</svg> -->
+<!-- 			</button> -->
+<!-- 		</form> -->
+<!-- 	</div> -->
+<!-- 	{{ end }} -->
+<!-- </div> -->
+<!-- {{ end }} -->
