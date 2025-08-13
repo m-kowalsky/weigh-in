@@ -1,4 +1,12 @@
 {{ block "weigh_ins_and_diets" . }}
+<script>
+	document.addEventListener("htmx:afterSwap", function () {
+		if (typeof window.initFlowbite === "function") {
+			window.initFlowbite();
+		}
+	});
+</script>
+
 <div class="flex items-center justify-center mb-4">
 	<h4 id="success-div" class="text-xl sm:text-2xl font-bold text-gray-800 text-center">
 		{{ if .Message }}{{ .Message }}{{ end }}
@@ -56,6 +64,14 @@
 	<div>
 		<h2 class="text-2xl font-bold text-gray-800 dark:text-gray-800 mb-4 text-center">Diets</h2>
 
+		<!-- Add diet Modal toggle -->
+		<div class="flex items-center">
+			<button type="button" data-modal-target="create-modal" data-modal-toggle="create-modal"
+				class="text-gray-500 hover:underline cursor-pointer">
+				Create New Diet
+			</button>
+		</div>
+
 		{{ range .UserDiets }}
 		<!-- Diet Display Card -->
 		<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 flex items-center justify-between mb-4">
@@ -79,6 +95,49 @@
 		{{ end }}
 	</div>
 </div>
+<!-- Create diet modal -->
+<div id="create-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 
+		justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+	<div class="relative p-4 w-full max-w-md max-h-full">
+		<!-- Modal content -->
+		<div class="w-full bg-white flex flex-col rounded-2xl shadow-md dark:bg-gray-800 p-4 space-y-6">
+			<!-- Modal header -->
+			<h2 id="create-modal-title" class="text-2xl font-bold text-gray-800 text-center dark:text-white">
+				Add New Diet
+			</h2>
+
+			<!-- Modal body -->
+			<form class="space-y-4" hx-post="/diet/new/{{ .User.ID }}" hx-target="#create-modal-title"
+				hx-on::after-request="if(event.detail.successful) this.reset()">
+				<!-- Diet input -->
+				<div>
+					<label for="diet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+						Diet*
+					</label>
+					<input type="text" name="diet" id="diet" class="mt-1 w-full rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 
+							dark:border-gray-600 text-gray-900 dark:text-white 
+							focus:ring-blue-500 focus:border-blue-500 p-2" placeholder="Enter diet name" autocomplete="off" required>
+				</div>
+
+				<!-- Default diet checkbox -->
+				<div class="flex items-center">
+					<input id="default-diet" name="is_default" type="checkbox" class="rounded text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 
+							dark:border-gray-600 focus:ring-blue-500" value="true">
+					<label for="default-diet" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+						Set as default diet
+					</label>
+				</div>
+
+				<!-- Submit button -->
+				<button type="submit" onclick="document.body.dispatchEvent(new Event('submit_new_diet'))" class="w-full flex items-center justify-center gap-3 px-5 py-3 text-white font-semibold 
+			rounded-xl bg-blue-500 hover:bg-blue-700">
+					Save Diet
+				</button>
+			</form>
+		</div>
+	</div>
+</div>
+
 {{ end }}
 
 
