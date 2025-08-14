@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -380,32 +381,66 @@ func (cfg *ApiConfig) GetChartData(w http.ResponseWriter, r *http.Request) ([]by
 		log.Println("Failed to get weighIn data in getChartData()")
 	}
 
-	chart_data := ChartData{}
+	diet_map := make(map[string]map[string]int64)
+	xAxis_data := []string{}
+	diet_types := []string{}
+
 	for _, weighIn := range weighIn_data {
-		chart_data.XAxis = append(chart_data.XAxis, weighIn.LogDate.Format("01-02"))
-		chart_data.LineData = append(chart_data.LineData, opts.LineData{Value: weighIn.Weight})
+		diet := weighIn.WeighInDiet
+		if !slices.Contains(diet_types, diet) {
+			diet_types = append(diet_types, diet)
+		}
+		if _, exists := diet_map[diet]; !exists {
+			diet_map[diet] = make(map[string]int64)
+		}
+		xAxis_data = append(xAxis_data, weighIn.LogDate.Format("01-02"))
+		datekey := weighIn.LogDate.Format("01-02")
+		diet_map[diet][datekey] = weighIn.Weight
 	}
-	chart_html := renderChartContent(chart_data)
+
+	final_data := make(map[string]*ChartData)
+	x_index := 0
+	for diet, daily := range diet_map {
+		line := []opts.LineData{}
+		for _, day := range xAxis_data {
+			if val, ok := daily[day]; ok {
+				line = append(line, opts.LineData{Value: val, XAxisIndex: x_index})
+			} else {
+				line = append(line, opts.LineData{Value: "-", XAxisIndex: x_index})
+			}
+		}
+		fmt.Printf("line: %v\n", line)
+		final_data[diet] = &ChartData{
+			XAxis:    xAxis_data,
+			LineData: line,
+		}
+		x_index += 1
+	}
+
+	chart_html := renderChartContent(final_data, xAxis_data)
 
 	return chart_html, nil
 }
 
-func renderChartContent(data ChartData) []byte {
+func renderChartContent(data map[string]*ChartData, axis_data []string) []byte {
 
 	chart := charts.NewLine()
-	chart.SetGlobalOptions(charts.WithTitleOpts(opts.Title{Title: "Weigh Ins", Subtitle: "Last 30 days"}))
-
-	chart.SetXAxis(data.XAxis).AddSeries("Weight", data.LineData).SetSeriesOptions(
-		charts.WithLabelOpts(opts.Label{
-			Show: opts.Bool(true),
-		}),
-		charts.WithAreaStyleOpts(opts.AreaStyle{
-			Opacity: opts.Float(0.2),
-		}),
-		charts.WithLineChartOpts(opts.LineChart{
-			Smooth: opts.Bool(true),
-		}),
-	)
+	chart.SetGlobalOptions(
+		charts.WithTitleOpts(opts.Title{Title: "Weigh Ins", Subtitle: "Last 30 days"}))
+	chart.SetXAxis(axis_data)
+	for diet, value := range data {
+		chart.AddSeries(diet, value.LineData).SetSeriesOptions(
+			charts.WithLabelOpts(opts.Label{
+				Show: opts.Bool(true),
+			}),
+			charts.WithAreaStyleOpts(opts.AreaStyle{
+				Opacity: opts.Float(0.2),
+			}),
+			charts.WithLineChartOpts(opts.LineChart{
+				Smooth: opts.Bool(true),
+			}),
+		)
+	}
 	chartHTML := chart.RenderContent()
 
 	return chartHTML
