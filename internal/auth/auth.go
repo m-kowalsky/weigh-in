@@ -14,7 +14,7 @@ import (
 
 const (
 	MaxAge = 86400 * 30
-	IsProd = false
+	IsProd = true
 )
 
 func NewAuth() {
