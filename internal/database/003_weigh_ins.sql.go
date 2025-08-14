@@ -141,7 +141,7 @@ func (q *Queries) GetWeighInsByUser(ctx context.Context, userID int64) ([]WeighI
 }
 
 const getWeightChartDataByUser = `-- name: GetWeightChartDataByUser :many
-Select log_date, weight from weigh_ins
+Select log_date, weight, weigh_in_diet from weigh_ins
 where user_id = ? and log_date >= ?
 order by log_date
 `
@@ -152,8 +152,9 @@ type GetWeightChartDataByUserParams struct {
 }
 
 type GetWeightChartDataByUserRow struct {
-	LogDate time.Time
-	Weight  int64
+	LogDate     time.Time
+	Weight      int64
+	WeighInDiet string
 }
 
 func (q *Queries) GetWeightChartDataByUser(ctx context.Context, arg GetWeightChartDataByUserParams) ([]GetWeightChartDataByUserRow, error) {
@@ -165,7 +166,7 @@ func (q *Queries) GetWeightChartDataByUser(ctx context.Context, arg GetWeightCha
 	var items []GetWeightChartDataByUserRow
 	for rows.Next() {
 		var i GetWeightChartDataByUserRow
-		if err := rows.Scan(&i.LogDate, &i.Weight); err != nil {
+		if err := rows.Scan(&i.LogDate, &i.Weight, &i.WeighInDiet); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
